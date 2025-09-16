@@ -40,6 +40,10 @@ export const getBlogsRoutes = () => {
       res: Response<BlogBodyOutput | WrapValidErrorsType>
     ) => {
       const newBlog = blogsRepository.createBlog(req.body);
+      if (!newBlog) {
+        res.sendStatus(HTTP_STATUS_CODES.BAD_REQUEST400);
+        return;
+      }
       res.status(HTTP_STATUS_CODES.CREATED_201).send(toBlogDTO(newBlog));
     }
   );

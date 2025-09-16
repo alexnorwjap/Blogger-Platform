@@ -1,6 +1,7 @@
 import { body } from 'express-validator';
 
 const titleValidation = body('title')
+  .notEmpty()
   .trim()
   .isString()
   .withMessage('title should be string')
@@ -8,6 +9,7 @@ const titleValidation = body('title')
   .withMessage('maxLength: 30, minLength: 1');
 
 const descriptionValidation = body('shortDescription')
+  .notEmpty()
   .trim()
   .isString()
   .withMessage('shortDescription should be string')
@@ -15,6 +17,7 @@ const descriptionValidation = body('shortDescription')
   .withMessage('maxLength: 100, minLength: 1');
 
 const contentValidation = body('content')
+  .notEmpty()
   .trim()
   .isString()
   .withMessage('content should be string')
@@ -22,6 +25,7 @@ const contentValidation = body('content')
   .withMessage('maxLength: 1000, minLength: 1');
 
 const blogIdValidation = body('blogId')
+  .notEmpty()
   .trim()
   .isString()
   .withMessage('blogId should be string')
