@@ -3,7 +3,7 @@ import { getClearDbRouter } from './testing-routers/clearDB-router';
 import { getPostsRoutes } from './features/posts/posts.router';
 import { getBlogsRoutes } from './features/blogs/blogs.router';
 
-const app = express();
+export const app = express();
 export const routerPaths = {
   blogs: '/blogs',
   posts: '/posts',
@@ -18,5 +18,3 @@ app.use(routerPaths.posts, getPostsRoutes());
 app.get(routerPaths.root, (_req, res) => {
   res.send('IT Camasutra!!!');
 });
-
-export default app;
