@@ -4,5 +4,5 @@ export type ValidationErrorType = {
 };
 
 export type WrapValidErrorsType = {
-  errorMessages: ValidationErrorType[];
+  errorsMessages: ValidationErrorType[];
 };

@@ -27,7 +27,7 @@ export const inputValidationResult = (
   if (errors.length > 0) {
     return res
       .status(HTTP_STATUS_CODES.BAD_REQUEST400)
-      .send({ errorMessages: errors });
+      .send({ errorsMessages: errors });
   }
 
   next();
