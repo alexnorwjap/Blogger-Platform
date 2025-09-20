@@ -6,7 +6,7 @@ const createBlogService = async (blog: BlogBodyInput): Promise<BlogBodyOutput> =
   const newBlog = {
     ...blog,
     createdAt: new Date(),
-    isMembership: true,
+    isMembership: false,
   };
   return toBlogDTO(await blogsRepository.create(newBlog));
 };
