@@ -1,10 +1,10 @@
 type Post = {
-  id: number;
   title: string;
   shortDescription: string;
   content: string;
-  blogId: number;
+  blogId: string;
   blogName: string;
+  createdAt: Date;
 };
 
 export { Post };

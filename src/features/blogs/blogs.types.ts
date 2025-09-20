@@ -1,8 +1,9 @@
 type Blog = {
-  id: number;
   name: string;
   description: string;
   websiteUrl: string;
+  createdAt: Date;
+  isMembership: boolean;
 };
 
 export { Blog };

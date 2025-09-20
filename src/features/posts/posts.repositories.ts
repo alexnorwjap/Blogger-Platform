@@ -1,49 +1,35 @@
-import db from '../../db/db';
-import { Post } from './posts.types';
+import { postCollection } from '../../db/mongo.db';
+import { WithId } from 'mongodb';
+import { ObjectId } from 'mongodb';
+
 import { PostBodyInput } from './posts.dto';
-import { blogsRepository } from '../blogs/blogs.repositories';
+import { Post } from './posts.types';
 
 const postsRepository = {
-  getAllPosts: (): Post[] => {
-    return db.posts;
+  getAllPosts: async (): Promise<WithId<Post>[]> => {
+    return postCollection.find().toArray();
   },
-  getPostById: (id: number): Post | null => {
-    const result = db.posts.find((post: Post) => post.id === id);
-    if (!result) {
-      return null;
-    }
-    return result;
+  getPostById: async (id: string): Promise<WithId<Post> | null> => {
+    return postCollection.findOne({ _id: new ObjectId(id) });
   },
-  createPost: (post: PostBodyInput): Post => {
-    const newPost = {
-      id: Math.max(...db.posts.map(post => post.id), 0) + 1,
-      ...post,
-      blogId: Number(post.blogId),
-      blogName: blogsRepository.getBlogNameById(Number(post.blogId)),
-    };
-    db.posts.push(newPost);
-    return newPost;
+  createPost: async (post: Post): Promise<WithId<Post>> => {
+    const newPost = await postCollection.insertOne(post);
+    return { ...post, _id: newPost.insertedId };
   },
-  updatePost: (id: number, post: PostBodyInput): boolean => {
-    const postIndex = db.posts.findIndex(post => post.id === id);
-    if (postIndex === -1) {
-      return false;
-    }
-    db.posts[postIndex] = {
-      ...db.posts[postIndex],
-      ...post,
-      blogId: Number(post.blogId),
-      blogName: blogsRepository.getBlogNameById(Number(post.blogId)),
-    };
-    return true;
+  updatePost: async (id: string, post: PostBodyInput): Promise<boolean> => {
+    const result = await postCollection.updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          ...post,
+        },
+      }
+    );
+    return result.modifiedCount > 0;
   },
-  deletePost: (id: number): boolean => {
-    const postIndex = db.posts.findIndex(post => post.id === id);
-    if (postIndex === -1) {
-      return false;
-    }
-    db.posts.splice(postIndex, 1);
-    return true;
+  deletePost: async (id: string): Promise<boolean> => {
+    const result = await postCollection.deleteOne({ _id: new ObjectId(id) });
+    return result.deletedCount > 0;
   },
 };
 

@@ -3,10 +3,12 @@ type BlogQueryParam = {
 };
 
 type BlogBodyOutput = {
-  id: string;
+  _id: string;
   name: string;
   description: string;
   websiteUrl: string;
+  createdAt: Date;
+  isMembership: boolean;
 };
 
 type BlogBodyInput = {

@@ -4,3 +4,5 @@ dist
 __tests__
 jest.config.js
 .prettierrc
+db-test.types.ts
+db-tests.ts

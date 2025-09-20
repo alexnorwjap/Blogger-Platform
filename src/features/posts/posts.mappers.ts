@@ -1,10 +1,10 @@
 import { Post } from './posts.types';
 import { PostBodyOutput } from './posts.dto';
+import { WithId } from 'mongodb';
 
-export const toPostDTO = (object: Post): PostBodyOutput => {
+export const toPostDTO = (object: WithId<Post>): PostBodyOutput => {
   return {
     ...object,
-    id: String(object.id),
-    blogId: String(object.blogId),
+    _id: object._id.toString(),
   };
 };
