@@ -4,7 +4,12 @@ import { WithId } from 'mongodb';
 
 export const toPostDTO = (object: WithId<Post>): PostBodyOutput => {
   return {
-    ...object,
-    _id: object._id.toString(),
+    id: object._id.toString(),
+    title: object.title,
+    shortDescription: object.shortDescription,
+    content: object.content,
+    blogId: object.blogId,
+    blogName: object.blogName,
+    createdAt: object.createdAt,
   };
 };
