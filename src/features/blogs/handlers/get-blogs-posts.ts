@@ -17,6 +17,10 @@ async function getBlogPosts(
   }
   const queryParams = req.query;
   const posts = await getPostsForBlogService(req.params.id, queryParams);
+  if (posts.items.length === 0) {
+    res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
+    return;
+  }
 
   res.status(HTTP_STATUS_CODES.OK_200).send(posts);
 }
