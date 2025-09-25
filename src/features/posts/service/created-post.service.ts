@@ -5,7 +5,11 @@ import { blogsRepository } from '../../blogs/blogs.repositories';
 
 export const createdPostService = async (
   post: PostBodyInput
-): Promise<PostBodyOutput> => {
+): Promise<PostBodyOutput | null> => {
+  const blogExist = await blogsRepository.getBlogById(post.blogId);
+  if (!blogExist) {
+    return null;
+  }
   const newPost = {
     ...post,
     blogName: await blogsRepository.getNameById(post.blogId),

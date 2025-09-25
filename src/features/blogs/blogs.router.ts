@@ -10,6 +10,7 @@ import { getBlog } from './handlers/get-blog.handler';
 import { getBlogsList } from './handlers/get-blogs-list.handler';
 import { getBlogPosts } from './handlers/get-blogs-posts';
 import { createPostForBlog } from './handlers/create-post-for-blog.handler';
+import { postInputDtoValidationForBlog } from './validation/post-by-blog.input-validation';
 
 export const getBlogsRoutes = () => {
   const router = express.Router();
@@ -20,7 +21,14 @@ export const getBlogsRoutes = () => {
 
   router.get('/:id', idValidation, getBlog);
 
-  router.post('/:id/posts', idValidation, authorization, createPostForBlog);
+  router.post(
+    '/:id/posts',
+    authorization,
+    postInputDtoValidationForBlog,
+    inputValidationResult,
+    idValidation,
+    createPostForBlog
+  );
   router.post(
     '/',
     authorization,
