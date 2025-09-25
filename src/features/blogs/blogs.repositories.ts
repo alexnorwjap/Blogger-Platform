@@ -1,13 +1,22 @@
 import { blogCollection } from '../../db/mongo.db';
 import { WithId } from 'mongodb';
 import { ObjectId } from 'mongodb';
+import { BlogMongoQuery } from './blogs.types';
 
-import { BlogBodyInput, BlogBodyOutput } from './blogs.dto';
+import { BlogBodyInput } from './blogs.dto';
 import { Blog } from './blogs.types';
 
 const blogsRepository = {
-  getAllBlogs: async (): Promise<WithId<Blog>[]> => {
-    return blogCollection.find().toArray();
+  getBlogsWithQuery: async (params: BlogMongoQuery): Promise<WithId<Blog>[]> => {
+    return blogCollection
+      .find(params.filter)
+      .sort(params.sort)
+      .skip(params.skip)
+      .limit(params.limit)
+      .toArray();
+  },
+  getBlogsCount: async (filter: object): Promise<number> => {
+    return blogCollection.countDocuments(filter);
   },
   getBlogById: async (id: string): Promise<WithId<Blog> | null> => {
     return blogCollection.findOne({ _id: new ObjectId(id) });
@@ -26,6 +35,11 @@ const blogsRepository = {
   deleteBlog: async (id: string): Promise<boolean> => {
     const result = await blogCollection.deleteOne({ _id: new ObjectId(id) });
     return result.deletedCount > 0;
+  },
+
+  getNameById: async (id: string): Promise<string> => {
+    const result = await blogCollection.findOne({ _id: new ObjectId(id) });
+    return result?.name || 'name not found';
   },
 };
 

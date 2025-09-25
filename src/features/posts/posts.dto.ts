@@ -1,4 +1,4 @@
-type PostQueryParam = {
+type PostId = {
   id: string;
 };
 
@@ -19,4 +19,12 @@ type PostBodyInput = {
   blogId: string;
 };
 
-export { PostQueryParam, PostBodyOutput, PostBodyInput };
+type PostsViewModel = {
+  pagesCount: number;
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  items: PostBodyOutput[];
+};
+
+export { PostId, PostBodyOutput, PostBodyInput, PostsViewModel };

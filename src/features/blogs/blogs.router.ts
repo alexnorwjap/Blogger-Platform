@@ -8,13 +8,19 @@ import { deleteBlog } from './handlers/delete-blog.handler';
 import { updateBlog } from './handlers/update-blog.handler';
 import { getBlog } from './handlers/get-blog.handler';
 import { getBlogsList } from './handlers/get-blogs-list.handler';
+import { getBlogPosts } from './handlers/get-blogs-posts';
+import { createPostForBlog } from './handlers/create-post-for-blog.handler';
 
 export const getBlogsRoutes = () => {
   const router = express.Router();
 
   router.get('/', getBlogsList);
+
+  router.get('/:id/posts', idValidation, getBlogPosts);
+
   router.get('/:id', idValidation, getBlog);
 
+  router.post('/:id/posts', idValidation, authorization, createPostForBlog);
   router.post(
     '/',
     authorization,

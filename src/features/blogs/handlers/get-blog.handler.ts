@@ -1,5 +1,5 @@
 import { validationResult } from 'express-validator/lib/validation-result';
-import { BlogQueryParam } from '../blogs.dto';
+import { BlogId } from '../blogs.dto';
 import { HTTP_STATUS_CODES } from '../../../shared/constants/http-status';
 import { blogsRepository } from '../blogs.repositories';
 import { RequestParams } from '../../../shared/types/api.types';
@@ -8,7 +8,7 @@ import { BlogBodyOutput } from '../blogs.dto';
 import { toBlogDTO } from '../blogs.mappers';
 
 export const getBlog = async (
-  req: RequestParams<BlogQueryParam>,
+  req: RequestParams<BlogId>,
   res: Response<BlogBodyOutput>
 ) => {
   const errors = validationResult(req);

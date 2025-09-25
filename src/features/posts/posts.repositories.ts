@@ -4,10 +4,22 @@ import { ObjectId } from 'mongodb';
 
 import { PostBodyInput } from './posts.dto';
 import { Post } from './posts.types';
+import { PostMongoQuery } from './posts.types';
 
 const postsRepository = {
-  getAllPosts: async (): Promise<WithId<Post>[]> => {
-    return postCollection.find().toArray();
+  getAllPosts: async (params: PostMongoQuery): Promise<WithId<Post>[]> => {
+    return postCollection
+      .find(params.filter)
+      .sort(params.sort)
+      .skip(params.skip)
+      .limit(params.limit)
+      .toArray();
+  },
+  getPostsCount: async (filter: object): Promise<number> => {
+    return postCollection.countDocuments(filter);
+  },
+  getPostsByBlogId: async (blogId: string): Promise<WithId<Post>[]> => {
+    return postCollection.find({ blogId }).toArray();
   },
   getPostById: async (id: string): Promise<WithId<Post> | null> => {
     return postCollection.findOne({ _id: new ObjectId(id) });

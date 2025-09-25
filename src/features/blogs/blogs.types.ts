@@ -1,3 +1,5 @@
+import { Sort } from 'mongodb';
+
 type Blog = {
   name: string;
   description: string;
@@ -6,4 +8,11 @@ type Blog = {
   isMembership: boolean;
 };
 
-export { Blog };
+type BlogMongoQuery = {
+  filter: object;
+  sort: Sort;
+  skip: number;
+  limit: number;
+};
+
+export { Blog, BlogMongoQuery };

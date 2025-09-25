@@ -1,5 +1,5 @@
 import { RequestParams } from '../../../shared/types/api.types';
-import { PostQueryParam, PostBodyOutput } from '../posts.dto';
+import { PostBodyOutput, PostId } from '../posts.dto';
 import { Response } from 'express';
 import { validationResult } from 'express-validator';
 import { HTTP_STATUS_CODES } from '../../../shared/constants/http-status';
@@ -7,7 +7,7 @@ import { postsRepository } from '../posts.repositories';
 import { toPostDTO } from '../posts.mappers';
 
 export const getPost = async (
-  req: RequestParams<PostQueryParam>,
+  req: RequestParams<PostId>,
   res: Response<PostBodyOutput>
 ) => {
   const errors = validationResult(req);
