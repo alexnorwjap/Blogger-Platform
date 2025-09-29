@@ -1,32 +1,5 @@
-import { WithId } from 'mongodb';
-
 type BlogId = {
   id: string;
-};
-
-type BlogQueryParams = {
-  searchNameTerm?: string;
-  sortBy?: string;
-  sortDirection?: 'asc' | 'desc';
-  pageNumber?: string;
-  pageSize?: string;
-};
-
-type BlogsViewModel = {
-  pagesCount: number;
-  page: number;
-  pageSize: number;
-  totalCount: number;
-  items: BlogBodyOutput[];
-};
-
-type BlogBodyOutput = {
-  id: string;
-  name: string;
-  description: string;
-  websiteUrl: string;
-  createdAt: Date;
-  isMembership: boolean;
 };
 
 type BlogBodyInput = {
@@ -35,17 +8,10 @@ type BlogBodyInput = {
   websiteUrl: string;
 };
 
-type PostBodyInputForBlog = {
+type PostInputForBlog = {
   title: string;
   shortDescription: string;
   content: string;
 };
 
-export {
-  BlogId,
-  BlogBodyOutput,
-  BlogBodyInput,
-  BlogQueryParams,
-  BlogsViewModel,
-  PostBodyInputForBlog,
-};
+export { BlogId, BlogBodyInput, PostInputForBlog };

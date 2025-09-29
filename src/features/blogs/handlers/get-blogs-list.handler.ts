@@ -1,19 +1,17 @@
 import { HTTP_STATUS_CODES } from '../../../shared/constants/http-status';
-import { blogsRepository } from '../blogs.repositories';
-import { BlogBodyOutput, BlogsViewModel } from '../blogs.dto';
+import { BlogsViewModel } from '../models/BlogsViewModel'; // fix if output change
 import { RequestQuery } from '../../../shared/types/api.types';
-import { BlogQueryParams } from '../blogs.dto';
-import { toBlogDTO } from '../blogs.mappers';
-import { Response, Request, NextFunction } from 'express';
-import { getBlogsService } from '../service/get-blogs.service';
+import { Response, NextFunction } from 'express';
+import { blogQueryRepository } from '../infrastructure/db/BlogQueryRepositoryImpl';
+import { queryParamsDto } from '../repositories/dto/queryBlogDto'; // improve type itself?
 
 export const getBlogsList = async (
-  req: RequestQuery<BlogQueryParams>,
+  req: RequestQuery<queryParamsDto>,
   res: Response<BlogsViewModel>,
   next: NextFunction
 ) => {
   console.log(req.query);
-  const blogs = await getBlogsService(req.query);
+  const blogs = await blogQueryRepository.getAll(req.query);
 
   if (blogs.items.length === 0) {
     res.status(HTTP_STATUS_CODES.OK_200).send({

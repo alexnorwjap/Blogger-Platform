@@ -1,9 +1,9 @@
 import { validationResult } from 'express-validator';
 import { HTTP_STATUS_CODES } from '../../../shared/constants/http-status';
-import { blogsRepository } from '../blogs.repositories';
 import { BlogId } from '../blogs.dto';
 import { RequestParams } from '../../../shared/types/api.types';
 import { Response } from 'express';
+import { blogService } from '../service/blogService';
 
 export const deleteBlog = async (req: RequestParams<BlogId>, res: Response) => {
   const errors = validationResult(req);
@@ -11,7 +11,7 @@ export const deleteBlog = async (req: RequestParams<BlogId>, res: Response) => {
     res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
     return;
   }
-  const result = await blogsRepository.deleteBlog(req.params.id);
+  const result = await blogService.deleteBlog(req.params.id);
   if (!result) {
     return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
   }

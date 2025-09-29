@@ -8,7 +8,7 @@ import { deleteBlog } from './handlers/delete-blog.handler';
 import { updateBlog } from './handlers/update-blog.handler';
 import { getBlog } from './handlers/get-blog.handler';
 import { getBlogsList } from './handlers/get-blogs-list.handler';
-import { getBlogPosts } from './handlers/get-blogs-posts';
+import { getBlogPosts } from './handlers/getPostsForBlog';
 import { createPostForBlog } from './handlers/create-post-for-blog.handler';
 import { postInputDtoValidationForBlog } from './validation/post-by-blog.input-validation';
 
@@ -29,22 +29,9 @@ export const getBlogsRoutes = () => {
     idValidation,
     createPostForBlog
   );
-  router.post(
-    '/',
-    authorization,
-    blogInputDtoValidation,
-    inputValidationResult,
-    createBlog
-  );
+  router.post('/', authorization, blogInputDtoValidation, inputValidationResult, createBlog);
 
-  router.put(
-    '/:id',
-    authorization,
-    blogInputDtoValidation,
-    inputValidationResult,
-    idValidation,
-    updateBlog
-  );
+  router.put('/:id', authorization, blogInputDtoValidation, inputValidationResult, idValidation, updateBlog);
 
   router.delete('/:id', authorization, idValidation, deleteBlog);
 

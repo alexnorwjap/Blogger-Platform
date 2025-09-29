@@ -3,7 +3,7 @@ import { RequestParams } from '../../../shared/types/api.types';
 import { BlogId } from '../blogs.dto';
 import { Response } from 'express';
 import { HTTP_STATUS_CODES } from '../../../shared/constants/http-status';
-import { updateBlogService } from '../service/update-blog.service';
+import { blogService } from '../service/blogService';
 
 export const updateBlog = async (req: RequestParams<BlogId>, res: Response) => {
   const errors = validationResult(req);
@@ -11,7 +11,7 @@ export const updateBlog = async (req: RequestParams<BlogId>, res: Response) => {
     res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
     return;
   }
-  const result = await updateBlogService(req.params.id, req.body);
+  const result = await blogService.updateBlog(req.params.id, req.body);
   if (!result) {
     res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
     return;
