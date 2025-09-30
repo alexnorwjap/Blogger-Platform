@@ -46,8 +46,12 @@ export class UserQueryMapper {
   public static toFilterSortPagination(query: queryParamsDto): UsersFilterSortPagination {
     return {
       filter: {
-        ...(query.searchLoginTerm ? { login: { $regex: query.searchLoginTerm, $options: 'i' } } : {}),
-        ...(query.searchEmailTerm ? { email: { $regex: query.searchEmailTerm, $options: 'i' } } : {}),
+        ...((query.searchLoginTerm || query.searchEmailTerm) && {
+          $or: [
+            ...(query.searchLoginTerm ? [{ login: { $regex: query.searchLoginTerm, $options: 'i' } }] : []),
+            ...(query.searchEmailTerm ? [{ email: { $regex: query.searchEmailTerm, $options: 'i' } }] : []),
+          ],
+        }),
       },
       sort: { [query.sortBy]: query.sortDirection === 'asc' ? 1 : -1 },
       skip: (+query.pageNumber - 1) * +query.pageSize,
