@@ -12,7 +12,6 @@ class LoginService {
       return false;
     }
     const isPasswordCorrect = await bcrypt.compare(dto.password, user.password);
-    console.log(user, dto.password);
     if (!isPasswordCorrect) {
       return false;
     }

@@ -5,5 +5,9 @@ import { Response } from 'express';
 
 export const deleteUser = async (req: RequestParams<{ id: string }>, res: Response) => {
   const result = await userService.deleteUser(req.params.id);
+  if (!result) {
+    res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
+    return;
+  }
   res.sendStatus(HTTP_STATUS_CODES.NO_CONTENT204);
 };
