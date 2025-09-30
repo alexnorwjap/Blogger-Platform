@@ -6,12 +6,13 @@ import { ObjectId } from 'mongodb';
 
 export class UsersRepoImpl implements UsersRepository {
   async create(dto: CreateUserDto): Promise<UserViewModel> {
-    const result = await userCollection.insertOne({ _id: new ObjectId(), ...dto, createdAt: new Date() });
+    const createdAt = new Date();
+    const result = await userCollection.insertOne({ _id: new ObjectId(), ...dto, createdAt: createdAt });
     return {
       id: result.insertedId.toString(),
       login: dto.login,
       email: dto.email,
-      createdAt: new Date(),
+      createdAt,
     };
   }
   async delete(id: string): Promise<boolean> {
