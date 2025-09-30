@@ -13,7 +13,7 @@ const createPostForBlog = async (
   req: RequestParamsAndBody<BlogId, PostInputForBlog>,
   res: Response<PostModel | WrapValidErrorsType>
 ) => {
-  const errors = validationResult(req);
+  const errors = validationResult(req.body);
   if (!errors.isEmpty()) {
     res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
     return;
