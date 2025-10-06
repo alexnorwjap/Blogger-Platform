@@ -1,18 +1,17 @@
 import { UsersRepository } from '../../../repositories/usersRepository';
-import { CreateUserDto } from '../../../repositories/dto/commandsUserDto';
+import { InputUserDto } from '../../../repositories/dto/commandsUserDto';
 import { UserViewModel } from '../../../models/User';
 import { userCollection } from '../../../../../db/mongo.db';
 import { ObjectId } from 'mongodb';
 
 export class UsersRepoImpl implements UsersRepository {
-  async create(dto: CreateUserDto): Promise<UserViewModel> {
-    const createdAt = new Date();
-    const result = await userCollection.insertOne({ _id: new ObjectId(), ...dto, createdAt: createdAt });
+  async create(dto: InputUserDto): Promise<UserViewModel> {
+    const result = await userCollection.insertOne({ _id: new ObjectId(), ...dto });
     return {
       id: result.insertedId.toString(),
       login: dto.login,
       email: dto.email,
-      createdAt,
+      createdAt: dto.createdAt,
     };
   }
   async delete(id: string): Promise<boolean> {

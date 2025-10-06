@@ -1,9 +1,5 @@
 import { NextFunction } from 'express';
-import {
-  validationResult,
-  ValidationError,
-  FieldValidationError,
-} from 'express-validator';
+import { validationResult, ValidationError, FieldValidationError } from 'express-validator';
 import { Response, Request } from 'express';
 import { HTTP_STATUS_CODES } from '../constants/http-status';
 import { ValidationErrorType } from '../types/errors-type';
@@ -16,18 +12,10 @@ const formatErrors = (error: ValidationError): ValidationErrorType => {
   };
 };
 
-export const inputValidationResult = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const errors = validationResult(req)
-    .formatWith(formatErrors)
-    .array({ onlyFirstError: true });
+export const inputValidationResult = (req: Request, res: Response, next: NextFunction) => {
+  const errors = validationResult(req).formatWith(formatErrors).array({ onlyFirstError: true });
   if (errors.length > 0) {
-    return res
-      .status(HTTP_STATUS_CODES.BAD_REQUEST400)
-      .send({ errorsMessages: errors });
+    return res.status(HTTP_STATUS_CODES.BAD_REQUEST400).send({ errorsMessages: errors });
   }
 
   next();

@@ -1,7 +1,7 @@
 import { WrapValidErrorsType } from '../../../shared/types/errors-type';
 import { UsersRepoImpl } from '../infrastructure/db/repositories/UsersRepoImpl';
 import { UserViewModel } from '../models/User';
-import { CreateUserDto } from '../repositories/dto/commandsUserDto';
+import { CreateUserDto } from './userServiceDto';
 import { UsersRepository } from '../repositories/usersRepository';
 import bcrypt from 'bcryptjs';
 
@@ -25,7 +25,7 @@ class UserService {
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-    return await this.usersRepository.create({ ...dto, password: hashedPassword });
+    return await this.usersRepository.create({ ...dto, password: hashedPassword, createdAt: new Date() });
   }
 
   async deleteUser(id: string): Promise<boolean> {

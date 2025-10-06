@@ -1,9 +1,9 @@
 import express, { Express } from 'express';
 import { getClearDbRouter } from './testing-routers/clearDB-router';
-import { getPostsRoutes } from './features/posts/posts.router';
-import { getBlogsRoutes } from './features/blogs/blogs.router';
+import { getPostsRoutes } from './features/post/router/postRouter';
+import { getBlogsRoutes } from './features/blog/router/blogRouter';
 import { usersRoutes } from './features/users/infrastructure/routes/usersRouter';
-import { authRoutes } from './features/auth/infrastructure/routes/authRouter';
+import { authRoutes } from './features/auth/router/authRouter';
 
 export const routerPaths = {
   users: '/users',
