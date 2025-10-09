@@ -1,9 +1,14 @@
-import { RequestBody, RequestParams, RequestQuery } from '../../../shared/types/api.types';
+import {
+  AuthRequestParamsAndBody,
+  RequestBody,
+  RequestParams,
+  RequestQuery,
+} from '../../../shared/types/api.types';
 import { queryParamsDto } from '../repositories/dto/queryRepoPostDto';
 import { PostsViewModel } from '../models/PostsViewModel';
 import { postQueryRepository } from '../database/repositories/PostQueryRepositoryImpl';
 import { HTTP_STATUS_CODES } from '../../../shared/constants/http-status';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { validationResult } from 'express-validator';
 import { WrapValidErrorsType } from '../../../shared/types/errors-type';
 import { PostModel } from '../models/Post';
@@ -11,6 +16,9 @@ import { blogQueryRepository } from '../../blog/db/blogQueryRepositoryImpl';
 import { postService } from '../service/postService';
 import { InputPostDto } from '../service/serviceDto';
 import { queryPostNormalize } from './helper/queryPostNormalize';
+import { commentsQueryRepoImpl } from '../../comments/database/queryRepoImpl';
+import { commentsService } from '../../comments/service/commentsService';
+import { usersQueryRepository } from '../../users/infrastructure/db/repositories/UsersQueryRepoImpl';
 
 class PostController {
   async getPostsList(req: RequestQuery<queryParamsDto>, res: Response<PostsViewModel>) {
@@ -85,6 +93,49 @@ class PostController {
       return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
     }
     res.sendStatus(HTTP_STATUS_CODES.NO_CONTENT204);
+  }
+
+  async getCommentsByPostId(req: RequestParams<{ id: string }>, res: Response) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
+      return;
+    }
+
+    const result = await commentsQueryRepoImpl.getCommentsByPostId(req.params.id, queryPostNormalize(req.query));
+    if (result.items.length === 0) {
+      res.status(HTTP_STATUS_CODES.OK_200).send({
+        pagesCount: 0,
+        page: 0,
+        pageSize: 0,
+        totalCount: 0,
+        items: [],
+      });
+      return;
+    }
+    res.status(HTTP_STATUS_CODES.OK_200).send(result);
+  }
+
+  async createCommentByPostId(req: AuthRequestParamsAndBody<{ id: string }, { content: string }>, res: Response) {
+    const errors = validationResult(req as Request);
+    if (!errors.isEmpty()) {
+      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
+      return;
+    }
+
+    let currentUser;
+    let currentCommentId;
+    if (req.user) {
+      currentUser = await usersQueryRepository.getUserById(req.user);
+      currentCommentId = await commentsService.createCommentByPostId(req.params.id, req.body.content, {
+        userId: currentUser!.id,
+        userLogin: currentUser!.login,
+      });
+    }
+    if (currentCommentId) {
+      const result = await commentsQueryRepoImpl.getCommentById(currentCommentId);
+      res.status(HTTP_STATUS_CODES.CREATED_201).send(result);
+    }
   }
 }
 

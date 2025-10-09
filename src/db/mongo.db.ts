@@ -2,16 +2,19 @@ import { Collection, Db, MongoClient } from 'mongodb';
 import { BlogEntity } from '../features/blog/db/entitiy';
 import { PostEntity } from '../features/post/database/entity/entities';
 import { User } from '../features/users/userTypes';
+import { CommentEntity } from '../features/comments/database/entity';
 import { SETTINGS } from '../shared/settings/settings';
 
 const BLOG_COLLECTION_NAME = 'blogs';
 const POST_COLLECTION_NAME = 'posts';
 const USER_COLLECTION_NAME = 'users';
+const COMMENT_COLLECTION_NAME = 'comments';
 
 export let client: MongoClient;
 export let blogCollection: Collection<BlogEntity>;
 export let postCollection: Collection<PostEntity>;
 export let userCollection: Collection<User>;
+export let commentCollection: Collection<CommentEntity>;
 
 // Подключения к бд
 export async function runDB(url: string): Promise<void> {
@@ -22,7 +25,7 @@ export async function runDB(url: string): Promise<void> {
   blogCollection = db.collection<BlogEntity>(BLOG_COLLECTION_NAME);
   postCollection = db.collection<PostEntity>(POST_COLLECTION_NAME);
   userCollection = db.collection<User>(USER_COLLECTION_NAME);
-
+  commentCollection = db.collection<CommentEntity>(COMMENT_COLLECTION_NAME);
   try {
     await client.connect();
     await db.command({ ping: 1 });

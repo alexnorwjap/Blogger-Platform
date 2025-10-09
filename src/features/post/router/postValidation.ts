@@ -36,6 +36,13 @@ const blogIdValidation = body('blogId')
   .isLength({ max: 30, min: 1 })
   .withMessage('maxLength: 30, minLength: 1');
 
+export const contentCommentValidation = body('content')
+  .trim()
+  .notEmpty()
+  .withMessage('content is empty')
+  .isLength({ max: 300, min: 20 })
+  .withMessage('maxLength: 300, minLength: 20');
+
 export const postInputDtoValidation = [
   titleValidation,
   descriptionValidation,

@@ -4,11 +4,13 @@ import { getPostsRoutes } from './features/post/router/postRouter';
 import { getBlogsRoutes } from './features/blog/router/blogRouter';
 import { usersRoutes } from './features/users/infrastructure/routes/usersRouter';
 import { authRoutes } from './features/auth/router/authRouter';
+import { commentsRoutes } from './features/comments/router/commentsRouter';
 
 export const routerPaths = {
   users: '/users',
   blogs: '/blogs',
   posts: '/posts',
+  comments: '/comments',
   auth: '/auth',
   clearDb: '/testing/all-data',
   root: '/',
@@ -21,6 +23,7 @@ export const setupApp = async (app: Express) => {
   app.use(routerPaths.posts, getPostsRoutes());
   app.use(routerPaths.users, usersRoutes());
   app.use(routerPaths.auth, authRoutes());
+  app.use(routerPaths.comments, commentsRoutes());
   app.get(routerPaths.root, (_req, res) => {
     res.send('IT Camasutra!!!');
   });

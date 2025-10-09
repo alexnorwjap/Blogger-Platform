@@ -1,0 +1,33 @@
+import { NextFunction, Request, Response } from 'express';
+import { HTTP_STATUS_CODES } from '../constants/http-status';
+import { UserRequest } from '../types/api.types';
+import { jwtService } from '../../features/auth/infrastructure/jwtService';
+import { authQueryRepository } from '../../features/auth/database/authQueryRepoImpl';
+
+const authorizationBearer = async (req: UserRequest, res: Response, next: NextFunction) => {
+  console.log(req.headers['authorization']);
+  const auth = typeof req.headers['authorization'] === 'string' ? req.headers['authorization'] : null;
+
+  if (!auth) {
+    res.status(HTTP_STATUS_CODES.UNAUTHORIZED401).send('Unauthorized');
+    return;
+  }
+
+  const [type, token] = auth.split(' ');
+  if (type !== 'Bearer') {
+    res.status(HTTP_STATUS_CODES.UNAUTHORIZED401).send('Unauthorized');
+    return;
+  }
+
+  const userId = jwtService.getUserIdByToken(token);
+  console.log(userId);
+  if (userId) {
+    req.user = userId;
+    next();
+  } else {
+    res.status(HTTP_STATUS_CODES.UNAUTHORIZED401).send('Unauthorized');
+    return;
+  }
+};
+
+export { authorizationBearer };

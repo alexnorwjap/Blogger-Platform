@@ -3,6 +3,8 @@ import { queryParamsDto } from '../../../repositories/dto/queryParamsDto';
 import { UsersViewModel } from '../../../models/UsersViewModel';
 import { UserQueryMapper } from '../mappers/UserQueryMapper';
 import { userCollection } from '../../../../../db/mongo.db';
+import { ObjectId } from 'mongodb';
+import { UserViewModel } from '../../../models/User';
 
 class UsersQueryRepoImpl implements UsersQueryRepository {
   async getAll(query: queryParamsDto): Promise<UsersViewModel> {
@@ -17,6 +19,10 @@ class UsersQueryRepoImpl implements UsersQueryRepository {
 
     const count = await userCollection.countDocuments(queryParams.filter);
     return UserQueryMapper.toDomainViewModel(queryResult, count, result.map(UserQueryMapper.toDomain));
+  }
+  async getUserById(id: ObjectId): Promise<UserViewModel | null> {
+    const result = await userCollection.findOne({ _id: id });
+    return result ? UserQueryMapper.toDomain(result) : null;
   }
 }
 

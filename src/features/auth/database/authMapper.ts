@@ -1,4 +1,4 @@
-import { authModel } from '../model/meModel';
+import { authModel } from '../model/authModel';
 import { entityDB } from './entity';
 
 export class AuthMapper {

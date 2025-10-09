@@ -6,16 +6,16 @@ import { AuthRepoImpl } from '../database/authRepoImpl';
 export class AuthService {
   constructor(readonly authRepository: AuthRepository) {}
 
-  async loginCheck(dto: AuthDto): Promise<boolean> {
+  async loginCheck(dto: AuthDto): Promise<string | null> {
     const user = await this.authRepository.findByLoginOrEmail(dto.loginOrEmail);
     if (!user) {
-      return false;
+      return null;
     }
     const isPasswordCorrect = await bcrypt.compare(dto.password, user.password);
     if (!isPasswordCorrect) {
-      return false;
+      return null;
     }
-    return true;
+    return user.userId;
   }
 }
 

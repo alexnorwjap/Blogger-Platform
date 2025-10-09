@@ -1,7 +1,7 @@
 import { userCollection } from '../../../db/mongo.db';
 import { AuthRepository } from '../repository/authRepo';
 import { AuthMapper } from './authMapper';
-import { authModel } from '../model/meModel';
+import { authModel } from '../model/authModel';
 
 export class AuthRepoImpl implements AuthRepository {
   async findByLoginOrEmail(loginOrEmail: string): Promise<authModel | null> {
