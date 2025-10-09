@@ -1,12 +1,12 @@
 import { CommentsQueryRepository } from '../repository/queryRepo';
-import { CommentModel, CommentsViewModel } from '../model/commentModel';
+import { CommentModel, CommentViewModel, CommentsViewModel } from '../model/commentModel';
 import { commentCollection } from '../../../db/mongo.db';
 import { ObjectId } from 'mongodb';
 import { CommentQueryMapper } from './queryMapper';
 import { queryParamsDto } from '../repository/repositoryDto';
 
 class CommentsQueryRepoImpl implements CommentsQueryRepository {
-  async getCommentById(id: string): Promise<CommentModel | null> {
+  async getCommentById(id: string): Promise<CommentViewModel | null> {
     const result = await commentCollection.findOne({ _id: new ObjectId(id) });
     return result ? CommentQueryMapper.toDomain(result) : null;
   }

@@ -1,14 +1,13 @@
 import { WithId } from 'mongodb';
 import { CommentEntity } from './entity';
-import { CommentModel, CommentsViewModel } from '../model/commentModel';
+import { CommentModel, CommentViewModel, CommentsViewModel } from '../model/commentModel';
 import { queryParamsDto } from '../repository/repositoryDto';
 import { FilterSortPagination } from './entity';
 
 export class CommentQueryMapper {
-  public static toDomain(entity: WithId<CommentEntity>): CommentModel {
+  public static toDomain(entity: WithId<CommentEntity>): CommentViewModel {
     return {
       id: entity._id.toString(),
-      postId: entity.postId,
       content: entity.content,
       commentatorInfo: entity.commentatorInfo,
       createdAt: entity.createdAt,
@@ -18,7 +17,7 @@ export class CommentQueryMapper {
   public static toDomainViewModel(
     query: queryParamsDto,
     count: number,
-    comments: CommentModel[]
+    comments: CommentViewModel[]
   ): CommentsViewModel {
     return {
       pagesCount: Math.ceil(count / +query.pageSize),
