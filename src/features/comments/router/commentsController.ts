@@ -3,9 +3,15 @@ import { Request, Response } from 'express';
 import { commentsQueryRepoImpl } from '../database/queryRepoImpl';
 import { commentsService } from '../service/commentsService';
 import { AuthRequestParams, AuthRequestParamsAndBody } from '../../../shared/types/api.types';
+import { validationResult } from 'express-validator';
 
 class CommentsController {
   async getCommentById(req: Request, res: Response) {
+    const errors = validationResult(req as Request);
+    if (!errors.isEmpty()) {
+      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
+      return;
+    }
     const comment = await commentsQueryRepoImpl.getCommentById(req.params.id);
     if (!comment) {
       res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
@@ -15,6 +21,11 @@ class CommentsController {
   }
 
   async updateComment(req: AuthRequestParamsAndBody<{ id: string }, { content: string }>, res: Response) {
+    const errors = validationResult(req as Request);
+    if (!errors.isEmpty()) {
+      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
+      return;
+    }
     const isUserComment = await commentsQueryRepoImpl.getCommentByUserIdAndCommentId(req.params.id, req.user!);
     if (!isUserComment) {
       res.sendStatus(HTTP_STATUS_CODES.FORBIDDEN403);
@@ -29,6 +40,12 @@ class CommentsController {
   }
 
   async deleteComment(req: AuthRequestParams<{ id: string }>, res: Response) {
+    const errors = validationResult(req as Request);
+    if (!errors.isEmpty()) {
+      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
+      return;
+    }
+
     const isUserComment = await commentsQueryRepoImpl.getCommentByUserIdAndCommentId(req.params.id, req.user!);
     if (!isUserComment) {
       res.sendStatus(HTTP_STATUS_CODES.FORBIDDEN403);

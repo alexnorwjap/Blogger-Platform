@@ -12,7 +12,7 @@ export const getPostsRoutes = () => {
 
   router.get('/', postController.getPostsList);
 
-  router.get('/:id/comments', authorizationBearer, idValidation, postController.getCommentsByPostId);
+  router.get('/:id/comments', idValidation, postController.getCommentsByPostId);
 
   router.get('/:id', idValidation, postController.getPost);
 
