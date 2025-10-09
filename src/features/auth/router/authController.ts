@@ -11,7 +11,9 @@ class AuthController {
 
     if (userId) {
       const token = jwtService.generateToken(userId);
-      res.status(HTTP_STATUS_CODES.OK_200).send(token);
+      res.status(HTTP_STATUS_CODES.OK_200).send({
+        accessToken: token,
+      });
     } else {
       res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED401);
     }
