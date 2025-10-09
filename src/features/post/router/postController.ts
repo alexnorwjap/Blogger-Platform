@@ -96,6 +96,12 @@ class PostController {
   }
 
   async getCommentsByPostId(req: RequestParams<{ id: string }>, res: Response) {
+    const post = await postQueryRepository.getPostById(req.params.id);
+    if (!post) {
+      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
+      return;
+    }
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
@@ -117,6 +123,12 @@ class PostController {
   }
 
   async createCommentByPostId(req: AuthRequestParamsAndBody<{ id: string }, { content: string }>, res: Response) {
+    const post = await postQueryRepository.getPostById(req.params.id);
+    if (!post) {
+      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
+      return;
+    }
+
     const errors = validationResult(req as Request);
     if (!errors.isEmpty()) {
       res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
