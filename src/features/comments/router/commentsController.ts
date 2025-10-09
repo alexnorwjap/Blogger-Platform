@@ -26,6 +26,12 @@ class CommentsController {
       res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
       return;
     }
+
+    const comment = await commentsQueryRepoImpl.getCommentById(req.params.id);
+    if (!comment) {
+      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
+      return;
+    }
     const isUserComment = await commentsQueryRepoImpl.getCommentByUserIdAndCommentId(req.params.id, req.user!);
     if (!isUserComment) {
       res.sendStatus(HTTP_STATUS_CODES.FORBIDDEN403);
@@ -42,6 +48,11 @@ class CommentsController {
   async deleteComment(req: AuthRequestParams<{ id: string }>, res: Response) {
     const errors = validationResult(req as Request);
     if (!errors.isEmpty()) {
+      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
+      return;
+    }
+    const comment = await commentsQueryRepoImpl.getCommentById(req.params.id);
+    if (!comment) {
       res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
       return;
     }
