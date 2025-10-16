@@ -53,7 +53,7 @@ class AuthController {
       return;
     }
     const confirmationCode = await authService.registration(req.body);
-    emailAdapter.sendEmail(req.body, confirmationCode);
+    await emailAdapter.sendEmail(req.body, confirmationCode);
 
     res.sendStatus(HTTP_STATUS_CODES.NO_CONTENT204);
   }
@@ -113,7 +113,7 @@ class AuthController {
     }
 
     const newConfirmationCode = await authService.registrationEmailResending(user);
-    emailAdapter.sendEmail(user, newConfirmationCode);
+    await emailAdapter.sendEmail(user, newConfirmationCode);
     res.sendStatus(HTTP_STATUS_CODES.NO_CONTENT204);
   }
 }
