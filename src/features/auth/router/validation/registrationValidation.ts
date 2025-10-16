@@ -25,13 +25,7 @@ export const emailValidation = body('email')
   .withMessage('email is required')
   .trim()
   .notEmpty()
-  .withMessage('must be correct')
-  .custom(value => {
-    const regex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
-    if (!regex.test(value)) {
-      throw new Error('must be a valid email address');
-    }
-    return true;
-  });
+  .isEmail()
+  .withMessage('must be a valid email address');
 
 export const registrationValidation = [login, password, emailValidation];
