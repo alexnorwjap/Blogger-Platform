@@ -4,7 +4,7 @@ import { ObjectId } from 'mongodb';
 
 export const jwtService = {
   generateToken: (dto: string): string => {
-    return jwt.sign({ dto }, SETTINGS.JWT_SECRET, { expiresIn: '15m' });
+    return jwt.sign({ dto }, SETTINGS.JWT_SECRET, { expiresIn: '1h' });
   },
 
   getUserIdByToken: (token: string): ObjectId | null => {

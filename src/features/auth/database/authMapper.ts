@@ -8,6 +8,9 @@ export class AuthMapper {
       login: entity.login,
       email: entity.email,
       password: entity.password,
+      createdAt: entity.createdAt,
+      isConfirmed: entity.isConfirmed,
+      confirmation: entity.confirmation,
     };
   }
 }

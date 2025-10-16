@@ -3,4 +3,9 @@ export type User = {
   email: string;
   password: string;
   createdAt: Date;
+  isConfirmed: boolean;
+  confirmation: {
+    confirmationCode: string;
+    expirationDate: Date;
+  };
 };

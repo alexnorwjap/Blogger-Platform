@@ -5,6 +5,7 @@ import { createUser } from '../routes/handlers/createUserHandler';
 import { deleteUser } from '../routes/handlers/deleteUserHandler';
 import { usersValidation } from '../routes/validation/postValidation';
 import { inputValidationResult } from '../../../../shared/middlewares/result-validation';
+import { idValidation } from '../../../../shared/middlewares/id-validation';
 
 export const usersRoutes = () => {
   const router = express.Router();
@@ -13,7 +14,7 @@ export const usersRoutes = () => {
 
   router.post('/', authorization, usersValidation, inputValidationResult, createUser);
 
-  router.delete('/:id', authorization, deleteUser);
+  router.delete('/:id', authorization, idValidation, deleteUser);
 
   return router;
 };

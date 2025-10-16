@@ -2,7 +2,7 @@ import { entityDB } from './entity';
 import { AuthViewModel } from '../repository/dto/authDto';
 
 export class AuthQueryMapper {
-  public static toService(entity: entityDB): AuthViewModel {
+  public static toViewModel(entity: entityDB): AuthViewModel {
     return {
       login: entity.login,
       email: entity.email,

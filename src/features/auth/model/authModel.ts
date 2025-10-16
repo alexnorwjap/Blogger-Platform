@@ -3,6 +3,12 @@ export class authModel {
     readonly email: string,
     readonly login: string,
     readonly userId: string,
-    readonly password: string
+    readonly password: string,
+    readonly createdAt: Date,
+    readonly isConfirmed: boolean,
+    readonly confirmation: {
+      confirmationCode: string;
+      expirationDate: Date;
+    }
   ) {}
 }

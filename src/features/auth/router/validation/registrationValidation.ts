@@ -1,0 +1,37 @@
+import { body } from 'express-validator';
+
+const login = body('login')
+  .exists()
+  .withMessage('login is required')
+  .trim()
+  .notEmpty()
+  .withMessage('must be correct')
+  .isLength({ min: 3, max: 10 })
+  .withMessage('Login must be between 3 and 10 characters')
+  .matches(/^[a-zA-Z0-9_-]*$/)
+  .withMessage('must contain only letters, numbers, underscores and hyphens');
+
+const password = body('password')
+  .exists()
+  .withMessage('password is required')
+  .trim()
+  .notEmpty()
+  .withMessage('must be correct')
+  .isLength({ min: 6, max: 20 })
+  .withMessage('Password must be between 6 and 20 characters');
+
+export const emailValidation = body('email')
+  .exists()
+  .withMessage('email is required')
+  .trim()
+  .notEmpty()
+  .withMessage('must be correct')
+  .custom(value => {
+    const regex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+    if (!regex.test(value)) {
+      throw new Error('must be a valid email address');
+    }
+    return true;
+  });
+
+export const registrationValidation = [login, password, emailValidation];

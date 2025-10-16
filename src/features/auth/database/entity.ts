@@ -6,4 +6,21 @@ export type entityDB = {
   email: string;
   password: string;
   createdAt: Date;
+  isConfirmed: boolean;
+  confirmation: {
+    confirmationCode: string;
+    expirationDate: Date;
+  };
+};
+
+export type inputCreateDto = {
+  email: string;
+  login: string;
+  password: string;
+  createdAt: Date;
+  isConfirmed: boolean;
+  confirmation: {
+    confirmationCode: string;
+    expirationDate: Date;
+  };
 };
