@@ -173,6 +173,12 @@ class AuthController {
       res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED401);
       return;
     }
+    const storedDevice = user.devices?.find(d => d.deviceId === device.deviceId);
+    if (storedDevice?.date.toISOString() !== device.date) {
+      res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED401);
+      return;
+    }
+
     const result = await authService.deleteDevice(device.deviceId);
     if (result) {
       res.sendStatus(HTTP_STATUS_CODES.NO_CONTENT204);
