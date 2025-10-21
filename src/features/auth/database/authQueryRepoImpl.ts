@@ -8,8 +8,8 @@ import { AuthMapper } from './authMapper';
 import { AuthDto } from '../repository/dto/authDto';
 
 class AuthQueryRepoImpl implements AuthQueryRepository {
-  async getProfile(deviceId: string): Promise<AuthViewModel | null> {
-    const user = await userCollection.findOne({ 'devices.deviceId': deviceId });
+  async getProfile(userId: string): Promise<AuthViewModel | null> {
+    const user = await userCollection.findOne({ _id: new ObjectId(userId) });
     if (!user) {
       return null;
     }

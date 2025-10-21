@@ -23,7 +23,7 @@ class AuthController {
         res.sendStatus(HTTP_STATUS_CODES.BAD_REQUEST400);
         return;
       }
-      const accessToken = jwtService.generateToken(device.deviceId);
+      const accessToken = jwtService.generateToken(correctCredentials);
       const refreshToken = jwtService.generateRefreshToken(device);
       res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, maxAge: 60000 });
       res.status(HTTP_STATUS_CODES.OK_200).send({
@@ -34,12 +34,12 @@ class AuthController {
     }
   }
 
-  async profile(req: DeviceRequest, res: Response) {
-    if (!req.deviceId) {
+  async profile(req: UserRequest, res: Response) {
+    if (!req.user) {
       res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED401);
       return;
     }
-    const user = await authQueryRepository.getProfile(req.deviceId);
+    const user = await authQueryRepository.getProfile(req.user.toString());
     res.status(HTTP_STATUS_CODES.OK_200).send(user);
   }
 
@@ -149,7 +149,7 @@ class AuthController {
       res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED401);
       return;
     }
-    const accessToken = jwtService.generateToken(newPayLoad.deviceId);
+    const accessToken = jwtService.generateToken(user.userId);
     const newRefreshToken = jwtService.generateRefreshToken(newPayLoad);
     res.cookie('refreshToken', newRefreshToken, { httpOnly: true, secure: true, maxAge: 60000 });
     res.status(HTTP_STATUS_CODES.OK_200).send({
