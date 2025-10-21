@@ -10,6 +10,7 @@ export const authRoutes = () => {
   const router = express.Router();
 
   router.post('/login', authValidation, inputValidationResult, authController.login);
+
   router.get('/me', authorizationBearer, authController.profile);
   router.post('/registration', registrationValidation, inputValidationResult, authController.registration);
   router.post(
@@ -24,6 +25,9 @@ export const authRoutes = () => {
     inputValidationResult,
     authController.registrationEmailResending
   );
+
+  router.post('/logout', authController.logout);
+  router.post('/refresh-token', authController.refreshToken);
 
   return router;
 };

@@ -8,24 +8,26 @@ import { emailAdapter } from '../adapter/emailAdapter';
 import { InputRegistrationDto } from '../repository/dto/authDto';
 import { AuthDto } from '../repository/dto/authDto';
 
-const account = {
-  user: 'tina.hoeger@ethereal.email',
-  pass: '5VMbYbuc3tPTVADKSk',
-};
-
 class AuthController {
   async login(req: RequestBody<AuthDto>, res: Response) {
-    const userId = await authQueryRepository.findByLoginOrEmail(req.body);
-    if (!userId) {
-      res.sendStatus(HTTP_STATUS_CODES.BAD_REQUEST400);
+    const user = await authQueryRepository.findByLoginOrEmail(req.body);
+    if (!user) {
+      res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED401);
       return;
     }
-    const correctCredentials = await authService.correctCredentials(req.body, userId);
+    const correctCredentials = await authService.correctCredentials(req.body, user);
 
     if (correctCredentials) {
-      const token = jwtService.generateToken(correctCredentials);
+      const device = await authService.createDevice(correctCredentials);
+      if (!device) {
+        res.sendStatus(HTTP_STATUS_CODES.BAD_REQUEST400);
+        return;
+      }
+      const accessToken = jwtService.generateToken(device.deviceId);
+      const refreshToken = jwtService.generateRefreshToken(device);
+      res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, maxAge: 60000 });
       res.status(HTTP_STATUS_CODES.OK_200).send({
-        accessToken: token,
+        accessToken: accessToken,
       });
     } else {
       res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED401);
@@ -53,14 +55,14 @@ class AuthController {
       return;
     }
     const confirmationCode = await authService.registration(req.body);
-    await emailAdapter.sendEmail(req.body, confirmationCode);
+    await emailAdapter.sendEmail(req.body.email, confirmationCode);
 
     res.sendStatus(HTTP_STATUS_CODES.NO_CONTENT204);
   }
 
   async registrationConfirmation(req: RequestBody<{ code: string }>, res: Response) {
     const user = await authQueryRepository.findByConfirmationCode(req.body.code);
-    if (!user) {
+    if (!user || user.isConfirmed) {
       res.status(HTTP_STATUS_CODES.BAD_REQUEST400).send({
         errorsMessages: [
           {
@@ -75,11 +77,10 @@ class AuthController {
     if (result) {
       res.sendStatus(HTTP_STATUS_CODES.NO_CONTENT204);
     } else {
-      authService.deleteUser(user.userId);
       res.status(HTTP_STATUS_CODES.BAD_REQUEST400).send({
         errorsMessages: [
           {
-            message: 'Code expired',
+            message: 'Confirmation code expired',
             field: 'code',
           },
         ],
@@ -113,8 +114,60 @@ class AuthController {
     }
 
     const newConfirmationCode = await authService.registrationEmailResending(user);
-    await emailAdapter.sendEmail(user, newConfirmationCode);
+    await emailAdapter.sendEmail(user.email, newConfirmationCode);
     res.sendStatus(HTTP_STATUS_CODES.NO_CONTENT204);
+  }
+
+  async refreshToken(req: Request, res: Response) {
+    const currentRefreshToken = req.cookies.refreshToken;
+    if (!currentRefreshToken) {
+      res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED401);
+      return;
+    }
+    const device = jwtService.getDeviceIdByToken(currentRefreshToken);
+    if (!device || new Date(device.expirationDate).getTime() < Date.now()) {
+      res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED401);
+      return;
+    }
+    const user = await authQueryRepository.findByDeviceId(device.deviceId);
+    if (!user) {
+      res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED401);
+      return;
+    }
+    const newPayLoad = await authService.updateDevice(user.userId, device);
+    if (!newPayLoad) {
+      res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED401);
+      return;
+    }
+    const accessToken = jwtService.generateToken(newPayLoad.deviceId);
+    const newRefreshToken = jwtService.generateRefreshToken(newPayLoad);
+    res.cookie('refreshToken', newRefreshToken, { httpOnly: true, secure: true, maxAge: 60000 });
+    res.status(HTTP_STATUS_CODES.OK_200).send({
+      accessToken: accessToken,
+    });
+  }
+
+  async logout(req: Request, res: Response) {
+    const currentRefreshToken = req.cookies.refreshToken;
+    if (!currentRefreshToken) {
+      res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED401);
+      return;
+    }
+    const device = jwtService.getDeviceIdByToken(currentRefreshToken);
+    if (!device) {
+      res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED401);
+      return;
+    }
+    const user = await authQueryRepository.findByDeviceId(device.deviceId);
+    if (!user) {
+      res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED401);
+      return;
+    }
+    const result = await authService.deleteDevice(device.deviceId);
+    if (result) {
+      res.sendStatus(HTTP_STATUS_CODES.NO_CONTENT204);
+      return;
+    }
   }
 }
 

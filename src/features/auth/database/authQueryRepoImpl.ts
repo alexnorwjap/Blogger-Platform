@@ -45,6 +45,11 @@ class AuthQueryRepoImpl implements AuthQueryRepository {
     const user = await userCollection.findOne({ email });
     return user ? AuthMapper.toService(user) : null;
   }
+
+  async findByDeviceId(deviceId: string): Promise<authModel | null> {
+    const user = await userCollection.findOne({ 'devices.deviceId': deviceId });
+    return user ? AuthMapper.toService(user) : null;
+  }
 }
 
 export const authQueryRepository = new AuthQueryRepoImpl();

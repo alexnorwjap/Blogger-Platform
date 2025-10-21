@@ -6,6 +6,7 @@ import { InputRegistrationDto } from '../repository/dto/authDto';
 import { randomUUID } from 'crypto';
 import { authModel } from '../model/authModel';
 import { add } from 'date-fns/add';
+import { jwtService } from '../infrastructure/jwtService';
 export class AuthService {
   constructor(readonly authRepository: AuthRepository) {}
 
@@ -15,6 +16,27 @@ export class AuthService {
       return null;
     }
     return user.userId;
+  }
+
+  async createDevice(userId: string): Promise<{ deviceId: string; date: Date } | null> {
+    const deviceId = randomUUID();
+    const device = {
+      deviceId: deviceId,
+      date: new Date(),
+    };
+    const result = await this.authRepository.createDevice(userId, device);
+    return result ? device : null;
+  }
+  async updateDevice(
+    userId: string,
+    device: { deviceId: string; date: string }
+  ): Promise<{ deviceId: string; date: Date } | null> {
+    const newDevice = {
+      deviceId: device.deviceId,
+      date: new Date(),
+    };
+    const result = await this.authRepository.updateDevice(userId, newDevice);
+    return result ? newDevice : null;
   }
 
   async registration(dto: InputRegistrationDto): Promise<string> {
@@ -40,7 +62,10 @@ export class AuthService {
     }
     const result = await this.authRepository.update(user.userId, {
       isConfirmed: true,
-      confirmation: { confirmationCode: '', expirationDate: new Date(0) },
+      confirmation: {
+        confirmationCode: user.confirmation.confirmationCode,
+        expirationDate: new Date(0),
+      },
     });
     return result;
   }
@@ -56,6 +81,9 @@ export class AuthService {
       confirmation: { confirmationCode: confirmationCode, expirationDate: add(new Date(), { minutes: 15 }) },
     });
     return confirmationCode;
+  }
+  async deleteDevice(deviceId: string): Promise<boolean> {
+    return await this.authRepository.deleteDevice(deviceId);
   }
 }
 

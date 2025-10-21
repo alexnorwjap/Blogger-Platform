@@ -5,6 +5,7 @@ import { getBlogsRoutes } from './features/blog/router/blogRouter';
 import { usersRoutes } from './features/users/infrastructure/routes/usersRouter';
 import { authRoutes } from './features/auth/router/authRouter';
 import { commentsRoutes } from './features/comments/router/commentsRouter';
+import cookieParser from 'cookie-parser';
 
 export const routerPaths = {
   users: '/users',
@@ -18,6 +19,7 @@ export const routerPaths = {
 
 export const setupApp = async (app: Express) => {
   app.use(express.json());
+  app.use(cookieParser());
   app.use(routerPaths.clearDb, getClearDbRouter());
   app.use(routerPaths.blogs, getBlogsRoutes());
   app.use(routerPaths.posts, getPostsRoutes());

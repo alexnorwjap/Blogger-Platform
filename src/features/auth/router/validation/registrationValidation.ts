@@ -25,6 +25,7 @@ export const emailValidation = body('email')
   .withMessage('email is required')
   .trim()
   .notEmpty()
+  .withMessage('email is empty')
   .isEmail()
   .withMessage('must be a valid email address');
 

@@ -6,4 +6,8 @@ export interface AuthRepository {
   create: (dto: inputCreateDto) => Promise<authModel>;
   update: (userId: string, dto: InputConfirmationDto) => Promise<boolean>;
   delete: (userId: string) => Promise<boolean>;
+
+  createDevice: (userId: string, device: { deviceId: string; date: Date }) => Promise<boolean>;
+  updateDevice: (userId: string, device: { deviceId: string; date: Date }) => Promise<boolean>;
+  deleteDevice: (deviceId: string) => Promise<boolean>;
 }

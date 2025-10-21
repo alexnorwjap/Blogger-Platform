@@ -3,7 +3,7 @@ import { InputRegistrationDto } from '../repository/dto/authDto';
 import { SETTINGS } from '../../../shared/settings/settings';
 
 class EmailAdapter {
-  async sendEmail(sendDto: InputRegistrationDto, confirmationCode: string) {
+  async sendEmail(email: string, confirmationCode: string) {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -14,13 +14,12 @@ class EmailAdapter {
 
     const info = await transporter.sendMail({
       from: `Mailito <${SETTINGS.EMAIL_USER}>`,
-      to: sendDto.email,
+      to: email,
       subject: 'Registration confirmation',
       html: ` <h1>Thank for your registration</h1>
- <p>To finish registration please follow the link below:
-     <a href='https://somesite.com/confirm-email?code=${confirmationCode}'>complete registration</a>
- </p>
-
+      <p>To finish registration please follow the link below:
+          <a href='https://somesite.com/confirm-email?code=${confirmationCode}'>complete registration</a>
+      </p>
 `,
     });
   }
