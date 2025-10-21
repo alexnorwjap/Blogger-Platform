@@ -8,8 +8,11 @@ import { AuthMapper } from './authMapper';
 import { AuthDto } from '../repository/dto/authDto';
 
 class AuthQueryRepoImpl implements AuthQueryRepository {
-  async getProfile(userId: ObjectId): Promise<AuthViewModel | null> {
-    const user = await userCollection.findOne({ _id: userId });
+  async getProfile(deviceId: string): Promise<AuthViewModel | null> {
+    const user = await userCollection.findOne({ 'devices.deviceId': deviceId });
+    if (!user) {
+      return null;
+    }
     return user ? AuthQueryMapper.toViewModel(user) : null;
   }
 
@@ -48,7 +51,10 @@ class AuthQueryRepoImpl implements AuthQueryRepository {
 
   async findByDeviceId(deviceId: string): Promise<authModel | null> {
     const user = await userCollection.findOne({ 'devices.deviceId': deviceId });
-    return user ? AuthMapper.toService(user) : null;
+    if (!user) {
+      return null;
+    }
+    return AuthMapper.toService(user);
   }
 }
 

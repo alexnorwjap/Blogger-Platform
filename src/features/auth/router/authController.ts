@@ -2,7 +2,7 @@ import { HTTP_STATUS_CODES } from '../../../shared/constants/http-status';
 import { authService } from '../service/authService';
 import { Request, Response } from 'express';
 import { jwtService } from '../infrastructure/jwtService';
-import { UserRequest, RequestBody } from '../../../shared/types/api.types';
+import { UserRequest, RequestBody, DeviceRequest } from '../../../shared/types/api.types';
 import { authQueryRepository } from '../database/authQueryRepoImpl';
 import { emailAdapter } from '../adapter/emailAdapter';
 import { InputRegistrationDto } from '../repository/dto/authDto';
@@ -34,8 +34,12 @@ class AuthController {
     }
   }
 
-  async profile(req: UserRequest, res: Response) {
-    const user = await authQueryRepository.getProfile(req.user!);
+  async profile(req: DeviceRequest, res: Response) {
+    if (!req.deviceId) {
+      res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED401);
+      return;
+    }
+    const user = await authQueryRepository.getProfile(req.deviceId);
     res.status(HTTP_STATUS_CODES.OK_200).send(user);
   }
 
@@ -134,6 +138,12 @@ class AuthController {
       res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED401);
       return;
     }
+    const storedDevice = user.devices?.find(d => d.deviceId === device.deviceId);
+    if (storedDevice?.date.toISOString() !== device.date) {
+      res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED401);
+      return;
+    }
+
     const newPayLoad = await authService.updateDevice(user.userId, device);
     if (!newPayLoad) {
       res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED401);

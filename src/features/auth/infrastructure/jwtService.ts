@@ -14,7 +14,6 @@ export const jwtService = {
   getDeviceIdByToken: (token: string): { deviceId: string; date: string; expirationDate: string } | null => {
     try {
       const result: any = jwt.verify(token, SETTINGS.JWT_SECRET);
-
       return {
         deviceId: result.deviceId,
         date: result.date,

@@ -8,6 +8,7 @@ type RequestParamsAndBody<T, B> = Request<T, unknown, B, unknown>;
 type RequestParamsAndQuery<T, Q> = Request<T, unknown, unknown, Q>;
 type CustomRequest = Request<unknown, unknown, unknown, unknown>;
 type UserRequest = CustomRequest & { user?: ObjectId };
+type DeviceRequest = CustomRequest & { deviceId?: string };
 
 type AuthRequestParamsAndBody<T, B> = Request<T, unknown, B, unknown> & { user?: ObjectId };
 type AuthRequestParams<T> = Request<T, unknown, unknown, unknown> & { user?: ObjectId };
@@ -22,4 +23,5 @@ export {
   CustomRequest,
   AuthRequestParamsAndBody,
   AuthRequestParams,
+  DeviceRequest,
 };
