@@ -6,59 +6,98 @@ import { InputRegistrationDto } from '../repository/dto/authDto';
 import { randomUUID } from 'crypto';
 import { authModel } from '../model/authModel';
 import { add } from 'date-fns/add';
-import { jwtService } from '../infrastructure/jwtService';
+import { jwtService } from '../adapter/jwtService';
+import { createResult, Result } from '../../../shared/utils/result-object';
+import { inExistingUser } from './helpers/inExistingUser';
+import { checkPassword, prepareDevice } from './helpers/checkPassword';
+import { emailAdapter } from '../adapter/emailAdapter';
+import { DeviceIdType, TokensType } from '../authType';
 export class AuthService {
   constructor(readonly authRepository: AuthRepository) {}
 
-  async correctCredentials(dto: AuthDto, user: authModel): Promise<string | null> {
-    const isPasswordCorrect = await bcrypt.compare(dto.password, user.password);
+  async login(dto: AuthDto, user: authModel): Promise<Result<TokensType | null>> {
+    const isPasswordCorrect = await checkPassword(dto.password, user.password);
     if (!isPasswordCorrect) {
-      return null;
+      return createResult('UNAUTHORIZED', null);
     }
-    return user.userId;
+
+    const device = prepareDevice();
+    const result = await this.authRepository.createDevice(user.userId, device);
+
+    if (result) {
+      const accessToken = jwtService.generateToken(user.userId);
+      const refreshToken = jwtService.generateRefreshToken(device);
+      return createResult('SUCCESS', {
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+      });
+    } else {
+      return createResult('BAD_REQUEST', null, 'Try Later, Please');
+    }
   }
 
-  async createDevice(userId: string): Promise<{ deviceId: string; date: Date } | null> {
-    const deviceId = randomUUID();
-    const device = {
-      deviceId: deviceId,
-      date: new Date(),
-    };
-    const result = await this.authRepository.createDevice(userId, device);
-    return result ? device : null;
-  }
-  async updateDevice(
-    userId: string,
-    device: { deviceId: string; date: string }
-  ): Promise<{ deviceId: string; date: Date } | null> {
+  async refreshToken(userId: string, device: DeviceIdType): Promise<Result<TokensType | null>> {
     const newDevice = {
       deviceId: device.deviceId,
       date: new Date(),
     };
     const result = await this.authRepository.updateDevice(userId, newDevice);
-    return result ? newDevice : null;
+    if (!result) {
+      return createResult('UNAUTHORIZED', null);
+    }
+    const accessToken = jwtService.generateToken(userId);
+    const refreshToken = jwtService.generateRefreshToken(newDevice);
+    return createResult('SUCCESS', {
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+    });
   }
 
-  async registration(dto: InputRegistrationDto): Promise<string> {
+  async registration(
+    dto: InputRegistrationDto,
+    existingUser: authModel | null
+  ): Promise<Result<{ confirmationCode: string } | null>> {
+    if (existingUser) {
+      return inExistingUser(existingUser, dto);
+    }
+
     const hashedPassword = await bcrypt.hash(dto.password, 10);
     const confirmationCode = randomUUID();
-    const user = await this.authRepository.create({
-      login: dto.login,
-      password: hashedPassword,
-      email: dto.email,
-      createdAt: new Date(),
-      isConfirmed: false,
-      confirmation: {
-        confirmationCode: confirmationCode,
-        expirationDate: add(new Date(), { minutes: 15 }),
-      },
+    await this.authRepository
+      .create({
+        login: dto.login,
+        password: hashedPassword,
+        email: dto.email,
+        createdAt: new Date(),
+        isConfirmed: false,
+        confirmation: {
+          confirmationCode: confirmationCode,
+          expirationDate: add(new Date(), { minutes: 15 }),
+        },
+      })
+      .catch(e => {
+        throw new Error('registration error');
+      });
+
+    emailAdapter.sendEmail(dto.email, confirmationCode).catch(e => {
+      throw new Error('email sending error');
     });
-    return confirmationCode;
+
+    return createResult('NO_CONTENT', {
+      confirmationCode: confirmationCode,
+    });
   }
 
-  async registrationConfirmation(user: authModel): Promise<boolean> {
+  async registrationConfirmation(user: authModel): Promise<Result<boolean | null>> {
+    if (!user || user.isConfirmed) {
+      return createResult('BAD_REQUEST', null, 'errorsMessages', [
+        { message: 'Invalid confirmation code or user already confirmed', field: 'code' },
+      ]);
+    }
     if (user.confirmation.expirationDate.getTime() < Date.now()) {
-      return false;
+      return createResult('BAD_REQUEST', null, 'errorsMessages', [
+        { message: 'Confirmation code expired', field: 'code' },
+      ]);
     }
     const result = await this.authRepository.update(user.userId, {
       isConfirmed: true,
@@ -67,23 +106,50 @@ export class AuthService {
         expirationDate: new Date(0),
       },
     });
-    return result;
+    return result
+      ? createResult('NO_CONTENT', true)
+      : createResult('BAD_REQUEST', null, 'Try Later, Please', [
+          { field: 'confirmation', message: 'Something went wrong, try later' },
+        ]);
   }
 
   async deleteUser(userId: string): Promise<boolean> {
     return await this.authRepository.delete(userId);
   }
 
-  async registrationEmailResending(user: authModel): Promise<string> {
+  async registrationEmailResending(user: authModel): Promise<Result<string | null>> {
+    if (!user) {
+      return createResult('BAD_REQUEST', null, 'errorsMessages', [
+        { message: 'User with this email not found or already confirmed', field: 'email' },
+      ]);
+    }
+    if (user.isConfirmed) {
+      return createResult('BAD_REQUEST', null, 'errorsMessages', [
+        { message: 'User with this email already confirmed', field: 'email' },
+      ]);
+    }
     const confirmationCode = randomUUID();
     const result = await this.authRepository.update(user.userId, {
       isConfirmed: false,
-      confirmation: { confirmationCode: confirmationCode, expirationDate: add(new Date(), { minutes: 15 }) },
+      confirmation: {
+        confirmationCode: confirmationCode,
+        expirationDate: add(new Date(), { minutes: 15 }),
+      },
     });
-    return confirmationCode;
+    return result
+      ? createResult('NO_CONTENT', confirmationCode)
+      : createResult('BAD_REQUEST', null, 'errorsMessages', [
+          { field: 'confirmation-code', message: 'Something went wrong, try later' },
+        ]);
   }
-  async deleteDevice(deviceId: string): Promise<boolean> {
-    return await this.authRepository.deleteDevice(deviceId);
+
+  async deleteDevice(deviceId: string): Promise<Result<boolean | null>> {
+    const result = await this.authRepository.deleteDevice(deviceId);
+    if (result) {
+      return createResult('NO_CONTENT', true);
+    } else {
+      return createResult('BAD_REQUEST', null, 'Try Later, Please, DB Error');
+    }
   }
 }
 

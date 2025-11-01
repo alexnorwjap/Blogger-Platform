@@ -3,10 +3,9 @@ type AuthDto = {
   password: string;
 };
 
-type AuthViewModel = {
-  userId: string;
-  login: string;
-  email: string;
+type DeviceDto = {
+  deviceId: string;
+  date: Date;
 };
 
 type InputRegistrationDto = {
@@ -23,4 +22,4 @@ type InputConfirmationDto = {
   };
 };
 
-export { AuthDto, AuthViewModel, InputRegistrationDto, InputConfirmationDto };
+export { AuthDto, InputRegistrationDto, InputConfirmationDto, DeviceDto };

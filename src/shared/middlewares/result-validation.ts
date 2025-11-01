@@ -15,7 +15,7 @@ const formatErrors = (error: ValidationError): ValidationErrorType => {
 export const inputValidationResult = (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req).formatWith(formatErrors).array({ onlyFirstError: true });
   if (errors.length > 0) {
-    return res.status(HTTP_STATUS_CODES.BAD_REQUEST400).send({ errorsMessages: errors });
+    return res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ errorsMessages: errors });
   }
 
   next();

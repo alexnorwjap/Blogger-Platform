@@ -1,4 +1,3 @@
-import { ObjectId } from 'mongodb';
 import { CommentEntity } from '../database/entity';
 
 export interface CommandCommentsRepository {

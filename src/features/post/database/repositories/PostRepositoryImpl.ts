@@ -5,14 +5,16 @@ import { PostMapper } from '../mappers/PostMapper';
 import { postCollection } from '../../../../db/mongo.db';
 import { ObjectId } from 'mongodb';
 export class PostRepositoryImpl implements PostRepository {
-  async create(dto: CreatePostDto): Promise<PostModel> {
+  async create(dto: CreatePostDto): Promise<string | null> {
     const result = await postCollection.insertOne({ _id: new ObjectId(), ...dto });
-    return PostMapper.toDomain({ _id: result.insertedId, ...dto });
+    return result.insertedId ? result.insertedId.toString() : null;
   }
-  async createByBlogId(dto: CreatePostDto): Promise<PostModel> {
+  // review complete
+  async createByBlogId(dto: CreatePostDto): Promise<string | null> {
     const result = await postCollection.insertOne({ _id: new ObjectId(), ...dto });
-    return PostMapper.toDomain({ _id: result.insertedId, ...dto });
+    return result.insertedId ? result.insertedId.toString() : null;
   }
+
   async update(id: string, dto: UpdatePostDto): Promise<boolean> {
     const result = await postCollection.updateOne(
       { _id: new ObjectId(id) },

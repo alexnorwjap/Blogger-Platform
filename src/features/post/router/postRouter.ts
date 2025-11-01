@@ -6,15 +6,16 @@ import { idValidation } from '../../../shared/middlewares/id-validation';
 import { postController } from './postController';
 import { authorizationBearer } from '../../../shared/middlewares/authorizationBearer';
 import { contentCommentValidation } from './postValidation';
+import { resultIdValidation } from '../../../shared/middlewares/resultIdValidation';
 
 export const getPostsRoutes = () => {
   const router = express.Router();
 
   router.get('/', postController.getPostsList);
 
-  router.get('/:id/comments', idValidation, postController.getCommentsByPostId);
+  router.get('/:id/comments', idValidation, resultIdValidation, postController.getCommentsByPostId);
 
-  router.get('/:id', idValidation, postController.getPost);
+  router.get('/:id', idValidation, resultIdValidation, postController.getPost);
 
   router.post(
     '/:id/comments',
@@ -22,10 +23,17 @@ export const getPostsRoutes = () => {
     contentCommentValidation,
     inputValidationResult,
     idValidation,
+    resultIdValidation,
     postController.createCommentByPostId
   );
 
-  router.post('/', authorization, postInputDtoValidation, inputValidationResult, postController.createPost);
+  router.post(
+    '/',
+    authorization,
+    postInputDtoValidation,
+    inputValidationResult,
+    postController.createPost
+  );
 
   router.put(
     '/:id',
@@ -33,10 +41,11 @@ export const getPostsRoutes = () => {
     postInputDtoValidation,
     inputValidationResult,
     idValidation,
+    resultIdValidation,
     postController.updatePost
   );
 
-  router.delete('/:id', authorization, idValidation, postController.deletePost);
+  router.delete('/:id', authorization, idValidation, resultIdValidation, postController.deletePost);
 
   return router;
 };

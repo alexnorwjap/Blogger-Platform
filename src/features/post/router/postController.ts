@@ -8,9 +8,7 @@ import { queryParamsDto } from '../repositories/dto/queryRepoPostDto';
 import { PostsViewModel } from '../models/PostsViewModel';
 import { postQueryRepository } from '../database/repositories/PostQueryRepositoryImpl';
 import { HTTP_STATUS_CODES } from '../../../shared/constants/http-status';
-import { Request, Response } from 'express';
-import { validationResult } from 'express-validator';
-import { WrapValidErrorsType } from '../../../shared/types/errors-type';
+import { Response } from 'express';
 import { PostModel } from '../models/Post';
 import { blogQueryRepository } from '../../blog/db/blogQueryRepositoryImpl';
 import { postService } from '../service/postService';
@@ -25,7 +23,7 @@ class PostController {
     const posts = await postQueryRepository.getAll(queryPostNormalize(req.query));
 
     if (posts.items.length === 0) {
-      res.status(HTTP_STATUS_CODES.OK_200).send({
+      res.status(HTTP_STATUS_CODES.SUCCESS).send({
         pagesCount: 0,
         page: 0,
         pageSize: 0,
@@ -34,83 +32,70 @@ class PostController {
       });
       return;
     }
-    res.status(HTTP_STATUS_CODES.OK_200).send(posts);
+    res.status(HTTP_STATUS_CODES.SUCCESS).send(posts);
   }
 
   async getPost(req: RequestParams<{ id: string }>, res: Response<PostModel>) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
-      return;
-    }
     const result = await postQueryRepository.getPostById(req.params.id);
     if (!result) {
-      console.log('resultMistakes', result);
-      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
+      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
       return;
     }
-    console.log('resultSuccess', result);
-    res.status(HTTP_STATUS_CODES.OK_200).send(result);
+    res.status(HTTP_STATUS_CODES.SUCCESS).send(result);
   }
 
-  async createPost(req: RequestBody<InputPostDto>, res: Response<PostModel | WrapValidErrorsType>) {
+  // review complete
+  async createPost(req: RequestBody<InputPostDto>, res: Response<PostModel>) {
     const blogExist = await blogQueryRepository.getBlogById(req.body.blogId);
     if (!blogExist) {
-      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
+      res.sendStatus(HTTP_STATUS_CODES.BAD_REQUEST);
       return;
     }
-    const result = await postService.createPost(req.body, blogExist.name);
-    if (!result) {
-      res.sendStatus(HTTP_STATUS_CODES.BAD_REQUEST400);
+    const postIdResult = await postService.createPost(req.body, blogExist.name);
+    if (!postIdResult.data) {
+      res.sendStatus(HTTP_STATUS_CODES[postIdResult.status]);
       return;
     }
-
-    res.status(HTTP_STATUS_CODES.CREATED_201).send(result);
+    const post = await postQueryRepository.getPostById(postIdResult.data);
+    if (!post) {
+      res.sendStatus(HTTP_STATUS_CODES.BAD_REQUEST);
+      return;
+    }
+    res.status(HTTP_STATUS_CODES.CREATED).send(post);
   }
 
+  // review complete
   async updatePost(req: RequestParams<{ id: string }>, res: Response) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.sendStatus(HTTP_STATUS_CODES.BAD_REQUEST400);
+    const resultUpdate = await postService.updatePost(req.params.id, req.body);
+    if (!resultUpdate.data) {
+      res.sendStatus(HTTP_STATUS_CODES[resultUpdate.status]);
       return;
     }
-    const result = await postService.updatePost(req.params.id, req.body);
-    if (!result) {
-      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
-      return;
-    }
-    res.sendStatus(HTTP_STATUS_CODES.NO_CONTENT204);
+    res.sendStatus(HTTP_STATUS_CODES[resultUpdate.status]);
   }
 
+  // review complete
   async deletePost(req: RequestParams<{ id: string }>, res: Response) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
-      return;
+    const resultDelete = await postService.deletePost(req.params.id);
+    if (!resultDelete.data) {
+      return res.sendStatus(HTTP_STATUS_CODES[resultDelete.status]);
     }
-    const result = await postService.deletePost(req.params.id);
-    if (!result) {
-      return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
-    }
-    res.sendStatus(HTTP_STATUS_CODES.NO_CONTENT204);
+    res.sendStatus(HTTP_STATUS_CODES[resultDelete.status]);
   }
 
+  // review complete
   async getCommentsByPostId(req: RequestParams<{ id: string }>, res: Response) {
     const post = await postQueryRepository.getPostById(req.params.id);
     if (!post) {
-      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
+      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
       return;
     }
-
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
-      return;
-    }
-
-    const result = await commentsQueryRepoImpl.getCommentsByPostId(req.params.id, queryPostNormalize(req.query));
+    const result = await commentsQueryRepoImpl.getCommentsByPostId(
+      req.params.id,
+      queryPostNormalize(req.query)
+    );
     if (result.items.length === 0) {
-      res.status(HTTP_STATUS_CODES.OK_200).send({
+      res.status(HTTP_STATUS_CODES.SUCCESS).send({
         pagesCount: 0,
         page: 0,
         pageSize: 0,
@@ -119,34 +104,37 @@ class PostController {
       });
       return;
     }
-    res.status(HTTP_STATUS_CODES.OK_200).send(result);
+    res.status(HTTP_STATUS_CODES.SUCCESS).send(result);
   }
 
-  async createCommentByPostId(req: AuthRequestParamsAndBody<{ id: string }, { content: string }>, res: Response) {
+  // review complete
+  async createCommentByPostId(
+    req: AuthRequestParamsAndBody<{ id: string }, { content: string }>,
+    res: Response
+  ) {
     const post = await postQueryRepository.getPostById(req.params.id);
-    if (!post) {
-      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
+    if (!post || !req.user) {
+      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
       return;
     }
 
-    const errors = validationResult(req as Request);
-    if (!errors.isEmpty()) {
-      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
+    const currentUser = await usersQueryRepository.getUserById(req.user);
+    if (!currentUser) {
+      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
       return;
     }
+    const resultCreateComment = await commentsService.createCommentByPostId(
+      req.params.id,
+      req.body.content,
+      currentUser
+    );
 
-    let currentUser;
-    let currentCommentId;
-    if (req.user) {
-      currentUser = await usersQueryRepository.getUserById(req.user);
-      currentCommentId = await commentsService.createCommentByPostId(req.params.id, req.body.content, {
-        userId: currentUser!.id,
-        userLogin: currentUser!.login,
-      });
-    }
-    if (currentCommentId) {
-      const result = await commentsQueryRepoImpl.getCommentById(currentCommentId);
-      res.status(HTTP_STATUS_CODES.CREATED_201).send(result);
+    if (resultCreateComment.data) {
+      const result = await commentsQueryRepoImpl.getCommentById(resultCreateComment.data);
+      res.status(HTTP_STATUS_CODES[resultCreateComment.status]).send(result);
+    } else {
+      res.sendStatus(HTTP_STATUS_CODES[resultCreateComment.status]);
+      return;
     }
   }
 }

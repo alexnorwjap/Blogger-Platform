@@ -5,15 +5,17 @@ import { authorization } from '../../../shared/middlewares/authorization';
 import { idValidation } from '../../../shared/middlewares/id-validation';
 import { postInputDtoValidationForBlog } from './validation/postValidationForBlog';
 import { blogController } from './blogController';
+import { resultIdValidation } from '../../../shared/middlewares/resultIdValidation';
 
 export const getBlogsRoutes = () => {
   const router = express.Router();
 
   router.get('/', blogController.getBlogsList);
 
-  router.get('/:id/posts', idValidation, blogController.getPostsForBlog);
+  router.get('/:id/posts', idValidation, resultIdValidation, blogController.getPostsForBlog);
 
-  router.get('/:id', idValidation, blogController.getBlog);
+  // review complete
+  router.get('/:id', idValidation, resultIdValidation, blogController.getBlog);
 
   router.post(
     '/:id/posts',
@@ -21,9 +23,16 @@ export const getBlogsRoutes = () => {
     postInputDtoValidationForBlog,
     inputValidationResult,
     idValidation,
+    resultIdValidation,
     blogController.createPostForBlog
   );
-  router.post('/', authorization, blogInputDtoValidation, inputValidationResult, blogController.createBlog);
+  router.post(
+    '/',
+    authorization,
+    blogInputDtoValidation,
+    inputValidationResult,
+    blogController.createBlog
+  );
 
   router.put(
     '/:id',
@@ -31,10 +40,11 @@ export const getBlogsRoutes = () => {
     blogInputDtoValidation,
     inputValidationResult,
     idValidation,
+    resultIdValidation,
     blogController.updateBlog
   );
 
-  router.delete('/:id', authorization, idValidation, blogController.deleteBlog);
+  router.delete('/:id', authorization, idValidation, resultIdValidation, blogController.deleteBlog);
 
   return router;
 };

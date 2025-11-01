@@ -11,18 +11,18 @@ const authorization = (req: CustomRequest, res: Response, next: NextFunction) =>
   const auth = typeof req.headers['authorization'] === 'string' ? req.headers['authorization'] : null;
 
   if (!auth) {
-    res.status(HTTP_STATUS_CODES.UNAUTHORIZED401).send('Unauthorized');
+    res.status(HTTP_STATUS_CODES.UNAUTHORIZED).send('Unauthorized');
     return;
   }
 
   const [type, token] = auth.split(' ');
   if (type !== 'Basic') {
-    res.status(HTTP_STATUS_CODES.UNAUTHORIZED401).send('Unauthorized');
+    res.status(HTTP_STATUS_CODES.UNAUTHORIZED).send('Unauthorized');
     return;
   }
 
   if (ADMIN_CREDENTIAL_BASE64 !== token) {
-    res.status(HTTP_STATUS_CODES.UNAUTHORIZED401).send('Unauthorized');
+    res.status(HTTP_STATUS_CODES.UNAUTHORIZED).send('Unauthorized');
     return;
   }
   next();

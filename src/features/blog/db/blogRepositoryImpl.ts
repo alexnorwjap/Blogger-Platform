@@ -6,12 +6,9 @@ import { ObjectId } from 'mongodb';
 import { BlogCreateDto, BlogUpdateDto } from '../repositories/dto/blogDto';
 
 export class BlogRepositoryImpl implements BlogRepository {
-  async create(dto: BlogCreateDto): Promise<BlogModel> {
+  async create(dto: BlogCreateDto): Promise<string | null> {
     const result = await blogCollection.insertOne(dto);
-    return BlogMapper.toDomain({
-      _id: result.insertedId,
-      ...dto,
-    });
+    return result.insertedId ? result.insertedId.toString() : null;
   }
   async update(id: string, dto: BlogUpdateDto): Promise<boolean> {
     const result = await blogCollection.updateOne({ _id: new ObjectId(id) }, { $set: { ...dto } });

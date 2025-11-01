@@ -7,67 +7,42 @@ import { validationResult } from 'express-validator';
 
 class CommentsController {
   async getCommentById(req: Request, res: Response) {
-    const errors = validationResult(req as Request);
-    if (!errors.isEmpty()) {
-      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
-      return;
-    }
     const comment = await commentsQueryRepoImpl.getCommentById(req.params.id);
-    if (!comment) {
-      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
-      return;
-    }
-    res.status(HTTP_STATUS_CODES.OK_200).send(comment);
+    if (!comment) return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
+    res.status(HTTP_STATUS_CODES.SUCCESS).send(comment);
   }
 
-  async updateComment(req: AuthRequestParamsAndBody<{ id: string }, { content: string }>, res: Response) {
-    const errors = validationResult(req as Request);
-    if (!errors.isEmpty()) {
-      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
-      return;
-    }
-
+  async updateComment(
+    req: AuthRequestParamsAndBody<{ id: string }, { content: string }>,
+    res: Response
+  ) {
     const comment = await commentsQueryRepoImpl.getCommentById(req.params.id);
-    if (!comment) {
-      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
-      return;
-    }
-    const isUserComment = await commentsQueryRepoImpl.getCommentByUserIdAndCommentId(req.params.id, req.user!);
-    if (!isUserComment) {
-      res.sendStatus(HTTP_STATUS_CODES.FORBIDDEN403);
-      return;
-    }
-    const result = await commentsService.updateComment(req.params.id, req.body.content);
-    if (!result) {
-      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
-      return;
-    }
-    res.sendStatus(HTTP_STATUS_CODES.NO_CONTENT204);
+    if (!comment || !req.user) return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
+
+    const isUserComment = await commentsQueryRepoImpl.getCommentByUserIdAndCommentId(
+      req.params.id,
+      req.user
+    );
+    if (!isUserComment) return res.sendStatus(HTTP_STATUS_CODES.FORBIDDEN);
+
+    const resultUpdate = await commentsService.updateComment(req.params.id, req.body.content);
+    if (!resultUpdate.data) return res.sendStatus(HTTP_STATUS_CODES[resultUpdate.status]);
+    res.sendStatus(HTTP_STATUS_CODES[resultUpdate.status]);
   }
 
   async deleteComment(req: AuthRequestParams<{ id: string }>, res: Response) {
-    const errors = validationResult(req as Request);
-    if (!errors.isEmpty()) {
-      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
-      return;
-    }
     const comment = await commentsQueryRepoImpl.getCommentById(req.params.id);
-    if (!comment) {
-      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
-      return;
-    }
+    if (!comment || !req.user) return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
 
-    const isUserComment = await commentsQueryRepoImpl.getCommentByUserIdAndCommentId(req.params.id, req.user!);
-    if (!isUserComment) {
-      res.sendStatus(HTTP_STATUS_CODES.FORBIDDEN403);
-      return;
-    }
-    const result = await commentsService.deleteComment(req.params.id);
-    if (!result) {
-      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND404);
-      return;
-    }
-    res.sendStatus(HTTP_STATUS_CODES.NO_CONTENT204);
+    const isUserComment = await commentsQueryRepoImpl.getCommentByUserIdAndCommentId(
+      req.params.id,
+      req.user
+    );
+    if (!isUserComment) return res.sendStatus(HTTP_STATUS_CODES.FORBIDDEN);
+
+    const resultDelete = await commentsService.deleteComment(req.params.id);
+    if (!resultDelete.data) return res.sendStatus(HTTP_STATUS_CODES[resultDelete.status]);
+    res.sendStatus(HTTP_STATUS_CODES[resultDelete.status]);
   }
 }
 

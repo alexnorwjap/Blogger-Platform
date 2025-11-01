@@ -18,10 +18,19 @@ class UsersQueryRepoImpl implements UsersQueryRepository {
       .toArray();
 
     const count = await userCollection.countDocuments(queryParams.filter);
-    return UserQueryMapper.toDomainViewModel(queryResult, count, result.map(UserQueryMapper.toDomain));
+    return UserQueryMapper.toDomainViewModel(
+      queryResult,
+      count,
+      result.map(UserQueryMapper.toDomain)
+    );
   }
-  async getUserById(id: ObjectId): Promise<UserViewModel | null> {
-    const result = await userCollection.findOne({ _id: id });
+  async getUserById(id: string): Promise<UserViewModel | null> {
+    const result = await userCollection.findOne({ _id: new ObjectId(id) });
+    return result ? UserQueryMapper.toDomain(result) : null;
+  }
+
+  async findByLoginOrEmail(login: string, email: string): Promise<UserViewModel | null> {
+    const result = await userCollection.findOne({ $or: [{ login }, { email }] });
     return result ? UserQueryMapper.toDomain(result) : null;
   }
 }

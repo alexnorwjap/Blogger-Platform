@@ -1,6 +1,7 @@
 import { userCollection } from '../../../db/mongo.db';
 import { AuthQueryRepository } from '../repository/authQueryRepo';
-import { AuthViewModel, InputRegistrationDto } from '../repository/dto/authDto';
+import { InputRegistrationDto } from '../repository/dto/authDto';
+import { AuthViewModel } from '../authType';
 import { ObjectId } from 'mongodb';
 import { AuthQueryMapper } from './authQueryMapper';
 import { authModel } from '../model/authModel';
@@ -18,7 +19,9 @@ class AuthQueryRepoImpl implements AuthQueryRepository {
 
   async findByLoginOrEmail(dto: InputRegistrationDto | AuthDto): Promise<authModel | null> {
     if ('login' in dto && 'email' in dto) {
-      const user = await userCollection.findOne({ $or: [{ login: dto.login }, { email: dto.email }] });
+      const user = await userCollection.findOne({
+        $or: [{ login: dto.login }, { email: dto.email }],
+      });
       if (!user) {
         return null;
       }
@@ -38,7 +41,7 @@ class AuthQueryRepoImpl implements AuthQueryRepository {
 
   async findByConfirmationCode(code: string): Promise<authModel | null> {
     const user = await userCollection.findOne({ 'confirmation.confirmationCode': code });
-    if (!user || user.isConfirmed) {
+    if (!user) {
       return null;
     }
     return AuthMapper.toService(user);
