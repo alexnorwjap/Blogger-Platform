@@ -11,7 +11,7 @@ export const requestLogValidation = async (req: Request, res: Response, next: Ne
   }
 
   const resultCountRequestLog = await queryRequestLogRepository.countByFilter({ ip, url });
-  if (resultCountRequestLog > 5) {
+  if (resultCountRequestLog >= 5) {
     return res.sendStatus(HTTP_STATUS_CODES.TOO_MANY_REQUESTS);
   }
   await requestLogService.addRequestLog({ ip, url });
