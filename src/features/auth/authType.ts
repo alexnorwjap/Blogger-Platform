@@ -4,6 +4,11 @@ type AuthViewModel = {
   email: string;
 };
 
+type LoginRequestInfo = {
+  ip: string;
+  title: string;
+};
+
 type DeviceIdType = {
   deviceId: string;
   date: string;
@@ -14,4 +19,4 @@ type TokensType = {
   refreshToken: string;
 };
 
-export { AuthViewModel, DeviceIdType, TokensType };
+export { AuthViewModel, DeviceIdType, TokensType, LoginRequestInfo };

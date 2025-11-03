@@ -5,9 +5,11 @@ import { getBlogsRoutes } from './features/blog/router/blogRouter';
 import { usersRoutes } from './features/users/infrastructure/routes/usersRouter';
 import { authRoutes } from './features/auth/router/authRouter';
 import { commentsRoutes } from './features/comments/router/commentsRouter';
+import { deviceRoutes } from './features/device/router/deviceRouter';
 import cookieParser from 'cookie-parser';
 
 export const routerPaths = {
+  devices: '/devices',
   users: '/users',
   blogs: '/blogs',
   posts: '/posts',
@@ -26,6 +28,7 @@ export const setupApp = async (app: Express) => {
   app.use(routerPaths.users, usersRoutes());
   app.use(routerPaths.auth, authRoutes());
   app.use(routerPaths.comments, commentsRoutes());
+  app.use(routerPaths.devices, deviceRoutes());
   app.get(routerPaths.root, (_req, res) => {
     res.send('IT Camasutra!!!');
   });

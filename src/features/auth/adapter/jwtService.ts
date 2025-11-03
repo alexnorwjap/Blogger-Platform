@@ -1,29 +1,22 @@
 import jwt from 'jsonwebtoken';
 import { SETTINGS } from '../../../shared/settings/settings';
-import { ObjectId } from 'mongodb';
-import { DeviceIdType } from '../authType';
+import { deviceQueryRepository } from '../../device/repository/deviceQueryRepository';
 
 export const jwtService = {
   generateToken: (dto: string): string => {
     return jwt.sign({ dto }, SETTINGS.JWT_SECRET, { expiresIn: '10seconds' });
   },
 
-  generateRefreshToken: (dto: { deviceId: string; date: Date }): string => {
-    return jwt.sign({ ...dto }, SETTINGS.JWT_SECRET, { expiresIn: '20seconds' });
+  generateRefreshToken: (dto: { id: string; lastActiveDate: Date }): string => {
+    return jwt.sign({ dto }, SETTINGS.JWT_SECRET, { expiresIn: '20seconds' });
   },
 
-  getDeviceIdByToken: (token: string): DeviceIdType | null => {
+  getDeviceDataByToken: (token: string): { id: string; lastActiveDate: Date } | null => {
     try {
       const result = jwt.verify(token, SETTINGS.JWT_SECRET) as {
-        deviceId: string;
-        date: string;
+        dto: { id: string; lastActiveDate: Date };
       };
-      return result
-        ? {
-            deviceId: result.deviceId,
-            date: result.date,
-          }
-        : null;
+      return result ? result.dto : null;
     } catch (error) {
       return null;
     }
@@ -36,5 +29,10 @@ export const jwtService = {
     } catch (error) {
       return null;
     }
+  },
+
+  checkTokenExpiration: async (id: string, lastActiveDate: Date): Promise<boolean> => {
+    const device = await deviceQueryRepository.getDeviceById(id);
+    return device ? device.lastActiveDate.getTime() !== lastActiveDate.getTime() : true;
   },
 };

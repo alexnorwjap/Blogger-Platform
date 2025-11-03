@@ -1,0 +1,8 @@
+type DeviceModel = {
+  ip: string;
+  title: string;
+  lastActiveDate: Date;
+  userId: string;
+};
+
+export type { DeviceModel };

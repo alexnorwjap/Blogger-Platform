@@ -5,12 +5,14 @@ import { User } from '../features/users/userTypes';
 import { CommentEntity } from '../features/comments/database/entity';
 import { RequestLogEntity } from '../features/request-log/model/RequestLogEntity';
 import { SETTINGS } from '../shared/settings/settings';
+import { DeviceModel } from '../features/device/model/deviceModel';
 
 const BLOG_COLLECTION_NAME = 'blogs';
 const POST_COLLECTION_NAME = 'posts';
 const USER_COLLECTION_NAME = 'users';
 const COMMENT_COLLECTION_NAME = 'comments';
 const REQUEST_LOG_COLLECTION_NAME = 'request_logs';
+const DEVICE_COLLECTION_NAME = 'devices';
 
 export let client: MongoClient;
 export let blogCollection: Collection<BlogEntity>;
@@ -18,6 +20,7 @@ export let postCollection: Collection<PostEntity>;
 export let userCollection: Collection<User>;
 export let commentCollection: Collection<CommentEntity>;
 export let requestLogCollection: Collection<RequestLogEntity>;
+export let deviceCollection: Collection<DeviceModel>;
 
 // Подключения к бд
 export async function runDB(url: string): Promise<void> {
@@ -30,6 +33,7 @@ export async function runDB(url: string): Promise<void> {
   userCollection = db.collection<User>(USER_COLLECTION_NAME);
   commentCollection = db.collection<CommentEntity>(COMMENT_COLLECTION_NAME);
   requestLogCollection = db.collection<RequestLogEntity>(REQUEST_LOG_COLLECTION_NAME);
+  deviceCollection = db.collection<DeviceModel>(DEVICE_COLLECTION_NAME);
   try {
     await client.connect();
     await db.command({ ping: 1 });

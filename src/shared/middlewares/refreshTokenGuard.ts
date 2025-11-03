@@ -3,6 +3,7 @@ import { HTTP_STATUS_CODES } from '../constants/http-status';
 import { jwtService } from '../../features/auth/adapter/jwtService';
 import { authQueryRepository } from '../../features/auth/database/authQueryRepoImpl';
 import { RefreshTokenRequest } from '../types/api.types';
+import { deviceQueryRepository } from '../../features/device/repository/deviceQueryRepository';
 
 export const refreshTokenGuard = async (
   req: RefreshTokenRequest,
@@ -16,25 +17,22 @@ export const refreshTokenGuard = async (
     return;
   }
 
-  const device = jwtService.getDeviceIdByToken(refreshToken);
-  if (!device) {
+  const deviceData = jwtService.getDeviceDataByToken(refreshToken);
+  if (!deviceData) {
+    res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
+    return;
+  }
+  const isTokenExpired = await jwtService.checkTokenExpiration(
+    deviceData.id,
+    new Date(deviceData.lastActiveDate)
+  );
+
+  if (isTokenExpired) {
     res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
     return;
   }
 
-  const user = await authQueryRepository.findByDeviceId(device.deviceId);
-  if (!user) {
-    res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
-    return;
-  }
-
-  const storedDevice = user.devices?.find(d => d.deviceId === device.deviceId);
-  if (storedDevice?.date.toISOString() !== device.date) {
-    res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
-    return;
-  }
-
-  req.user = user;
-  req.device = device;
+  req.deviceId = deviceData.id;
+  req.lastActiveDate = new Date(deviceData.lastActiveDate);
   next();
 };

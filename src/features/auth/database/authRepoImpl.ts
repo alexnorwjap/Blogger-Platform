@@ -4,9 +4,19 @@ import { AuthMapper } from './authMapper';
 import { authModel } from '../model/authModel';
 import { inputCreateDto } from './entity';
 import { ObjectId } from 'mongodb';
-import { InputConfirmationDto, DeviceDto } from '../repository/dto/authDto';
+import { InputConfirmationDto, DeviceDto, AuthDto } from '../repository/dto/authDto';
 
 export class AuthRepoImpl implements AuthRepository {
+  // code update
+  async findByLoginOrEmail(dto: AuthDto): Promise<authModel | null> {
+    const user = await userCollection.findOne({
+      $or: [{ login: dto.loginOrEmail }, { email: dto.loginOrEmail }],
+    });
+    if (!user) {
+      return null;
+    }
+    return AuthMapper.toService(user);
+  }
   async create(dto: inputCreateDto): Promise<authModel> {
     const user = await userCollection.insertOne({ _id: new ObjectId(), ...dto });
     return AuthMapper.toService({ _id: user.insertedId, ...dto });
@@ -24,31 +34,5 @@ export class AuthRepoImpl implements AuthRepository {
   async delete(userId: string): Promise<boolean> {
     const result = await userCollection.deleteOne({ _id: new ObjectId(userId) });
     return result.deletedCount > 0;
-  }
-
-  async createDevice(userId: string, device: DeviceDto): Promise<boolean> {
-    const result = await userCollection.updateOne(
-      { _id: new ObjectId(userId) },
-      { $push: { devices: device } }
-    );
-    return result.modifiedCount > 0;
-  }
-
-  async updateDevice(userId: string, device: DeviceDto): Promise<boolean> {
-    const result = await userCollection.updateOne(
-      {
-        _id: new ObjectId(userId),
-        'devices.deviceId': device.deviceId,
-      },
-      { $set: { 'devices.$.date': device.date } }
-    );
-    return result.modifiedCount > 0;
-  }
-  async deleteDevice(deviceId: string): Promise<boolean> {
-    const result = await userCollection.updateOne(
-      { 'devices.deviceId': deviceId },
-      { $pull: { devices: { deviceId } } }
-    );
-    return result.modifiedCount > 0;
   }
 }

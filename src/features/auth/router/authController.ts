@@ -6,25 +6,26 @@ import { authQueryRepository } from '../database/authQueryRepoImpl';
 import { emailAdapter } from '../adapter/emailAdapter';
 import { InputRegistrationDto } from '../repository/dto/authDto';
 import { AuthDto } from '../repository/dto/authDto';
+import { deviceQueryRepository } from '../../device/repository/deviceQueryRepository';
 
 class AuthController {
+  // updated
   async login(req: RequestBody<AuthDto>, res: Response) {
-    const user = await authQueryRepository.findByLoginOrEmail(req.body);
-    if (!user) return res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
-    const loginResult = await authService.login(req.body, user);
+    const loginResult = await authService.login(req.body, {
+      ip: req.ip || 'Unknown ip',
+      title: req.headers['user-agent'] || 'Unknown agent',
+    });
 
-    if (loginResult.data) {
-      res.cookie('refreshToken', loginResult.data.refreshToken, {
-        httpOnly: true,
-        secure: true,
-        maxAge: 60000,
-      });
-      res
-        .status(HTTP_STATUS_CODES[loginResult.status])
-        .send({ accessToken: loginResult.data.accessToken });
-    } else {
-      res.sendStatus(HTTP_STATUS_CODES[loginResult.status]);
-    }
+    if (!loginResult.data) return res.sendStatus(HTTP_STATUS_CODES[loginResult.status]);
+
+    res.cookie('refreshToken', loginResult.data.refreshToken, {
+      httpOnly: true,
+      secure: true,
+      maxAge: 60000,
+    });
+    res
+      .status(HTTP_STATUS_CODES[loginResult.status])
+      .send({ accessToken: loginResult.data.accessToken });
   }
 
   async profile(req: UserRequest, res: Response) {
@@ -33,6 +34,7 @@ class AuthController {
     res.status(HTTP_STATUS_CODES.SUCCESS).send(user);
   }
 
+  // вынести в сервис проверку на существование пользователя и вывод ошибки?
   async registration(req: RequestBody<InputRegistrationDto>, res: Response) {
     const existingUser = await authQueryRepository.findByLoginOrEmail(req.body);
     if (existingUser)
@@ -49,6 +51,7 @@ class AuthController {
     if (result.data) return res.sendStatus(HTTP_STATUS_CODES[result.status]);
   }
 
+  // вынести в сервис проверку на существование кода и вывод ошибки?
   async registrationConfirmation(req: RequestBody<{ code: string }>, res: Response) {
     const user = await authQueryRepository.findByConfirmationCode(req.body.code);
 
@@ -65,6 +68,7 @@ class AuthController {
     }
   }
 
+  // вынести в сервис проверку на существование пользователя и вывод ошибки?
   async registrationEmailResending(req: RequestBody<{ email: string }>, res: Response) {
     const user = await authQueryRepository.findByEmail(req.body.email);
 
@@ -84,10 +88,15 @@ class AuthController {
     }
   }
 
+  // оператор ! - плохо?   // updated
   async refreshToken(req: RefreshTokenRequest, res: Response) {
-    const { user, device } = req;
+    const device = await deviceQueryRepository.getDeviceById(req.deviceId!);
+    if (!device) {
+      res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
+      return;
+    }
 
-    const newTokens = await authService.refreshToken(user!.userId, device!);
+    const newTokens = await authService.refreshToken(device, req.deviceId!);
     if (!newTokens.data) {
       res.sendStatus(HTTP_STATUS_CODES[newTokens.status]);
       return;
@@ -101,19 +110,13 @@ class AuthController {
     res.status(HTTP_STATUS_CODES[newTokens.status]).send({ accessToken: accessToken });
   }
 
+  // updated
   async logout(req: RefreshTokenRequest, res: Response) {
-    const { device } = req;
-    const resultLogout = await authService.deleteDevice(device!.deviceId);
-    if (resultLogout.data) {
-      res.sendStatus(HTTP_STATUS_CODES[resultLogout.status]);
-      return;
+    const resultLogout = await authService.logout(req.deviceId!);
+    if (!resultLogout.data) {
+      return res.sendStatus(HTTP_STATUS_CODES[resultLogout.status]);
     }
-    if (resultLogout.errorMessage) {
-      res.status(HTTP_STATUS_CODES[resultLogout.status]).send({
-        [resultLogout.errorMessage]: resultLogout.extensions,
-      });
-      return;
-    }
+    return res.sendStatus(HTTP_STATUS_CODES[resultLogout.status]);
   }
 }
 

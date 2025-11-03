@@ -11,42 +11,54 @@ import { createResult, Result } from '../../../shared/utils/result-object';
 import { inExistingUser } from './helpers/inExistingUser';
 import { checkPassword, prepareDevice } from './helpers/checkPassword';
 import { emailAdapter } from '../adapter/emailAdapter';
-import { DeviceIdType, TokensType } from '../authType';
+import { DeviceIdType, LoginRequestInfo, TokensType } from '../authType';
+import { deviceService } from '../../device/service/deviceService';
+import { deviceQueryRepository } from '../../device/repository/deviceQueryRepository';
+import { DeviceModel } from '../../device/model/deviceModel';
 export class AuthService {
-  constructor(readonly authRepository: AuthRepository) {}
+  constructor(readonly authRepository: AuthRepoImpl) {}
+  // updated
+  async login(dto: AuthDto, reqInfo: LoginRequestInfo): Promise<Result<TokensType | null>> {
+    const user = await this.authRepository.findByLoginOrEmail(dto);
+    if (!user) {
+      return createResult('UNAUTHORIZED', null);
+    }
 
-  async login(dto: AuthDto, user: authModel): Promise<Result<TokensType | null>> {
     const isPasswordCorrect = await checkPassword(dto.password, user.password);
     if (!isPasswordCorrect) {
       return createResult('UNAUTHORIZED', null);
     }
 
-    const device = prepareDevice();
-    const result = await this.authRepository.createDevice(user.userId, device);
+    const dataForToken = await deviceService.createDevice({
+      ip: reqInfo.ip,
+      title: reqInfo.title,
+      userId: user.userId,
+    });
 
-    if (result) {
-      const accessToken = jwtService.generateToken(user.userId);
-      const refreshToken = jwtService.generateRefreshToken(device);
-      return createResult('SUCCESS', {
-        accessToken: accessToken,
-        refreshToken: refreshToken,
-      });
-    } else {
-      return createResult('BAD_REQUEST', null, 'Try Later, Please');
+    if (!dataForToken) {
+      return createResult('BAD_REQUEST', null, 'Try Later, Please, DB Error');
     }
+
+    const accessToken = jwtService.generateToken(user.userId);
+    const refreshToken = jwtService.generateRefreshToken(dataForToken);
+    return createResult('SUCCESS', {
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+    });
   }
 
-  async refreshToken(userId: string, device: DeviceIdType): Promise<Result<TokensType | null>> {
-    const newDevice = {
-      deviceId: device.deviceId,
-      date: new Date(),
-    };
-    const result = await this.authRepository.updateDevice(userId, newDevice);
+  // updated
+  async refreshToken(device: DeviceModel, deviceId: string): Promise<Result<TokensType | null>> {
+    const newDate = new Date();
+    const result = await deviceService.updateDevice(deviceId, newDate);
     if (!result) {
       return createResult('UNAUTHORIZED', null);
     }
-    const accessToken = jwtService.generateToken(userId);
-    const refreshToken = jwtService.generateRefreshToken(newDevice);
+    const accessToken = jwtService.generateToken(device.userId);
+    const refreshToken = jwtService.generateRefreshToken({
+      id: deviceId,
+      lastActiveDate: newDate,
+    });
     return createResult('SUCCESS', {
       accessToken: accessToken,
       refreshToken: refreshToken,
@@ -143,13 +155,12 @@ export class AuthService {
         ]);
   }
 
-  async deleteDevice(deviceId: string): Promise<Result<boolean | null>> {
-    const result = await this.authRepository.deleteDevice(deviceId);
-    if (result) {
-      return createResult('NO_CONTENT', true);
-    } else {
-      return createResult('BAD_REQUEST', null, 'Try Later, Please, DB Error');
-    }
+  // updated
+  async logout(deviceId: string): Promise<Result<boolean>> {
+    const result = await deviceService.deleteDevice(deviceId);
+    return result.data
+      ? createResult('NO_CONTENT', result.data)
+      : createResult('BAD_REQUEST', result.data);
   }
 }
 

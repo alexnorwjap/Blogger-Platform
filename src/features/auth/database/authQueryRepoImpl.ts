@@ -17,26 +17,11 @@ class AuthQueryRepoImpl implements AuthQueryRepository {
     return user ? AuthQueryMapper.toViewModel(user) : null;
   }
 
-  async findByLoginOrEmail(dto: InputRegistrationDto | AuthDto): Promise<authModel | null> {
-    if ('login' in dto && 'email' in dto) {
-      const user = await userCollection.findOne({
-        $or: [{ login: dto.login }, { email: dto.email }],
-      });
-      if (!user) {
-        return null;
-      }
-      return AuthMapper.toService(user);
-    }
-    if ('loginOrEmail' in dto) {
-      const user = await userCollection.findOne({
-        $or: [{ login: dto.loginOrEmail }, { email: dto.loginOrEmail }],
-      });
-      if (!user) {
-        return null;
-      }
-      return AuthMapper.toService(user);
-    }
-    return null;
+  async findByLoginOrEmail(dto: InputRegistrationDto): Promise<authModel | null> {
+    const user = await userCollection.findOne({
+      $or: [{ login: dto.login }, { email: dto.email }],
+    });
+    return user ? AuthMapper.toService(user) : null;
   }
 
   async findByConfirmationCode(code: string): Promise<authModel | null> {
