@@ -34,7 +34,11 @@ export const deviceController = {
   },
 
   //   refreshTokenGuard - имеет свой тип реквеста , нормально ли это ?
-  deleteDevice: async (req: RequestParams<{ deviceId: string }>, res: Response) => {
+  deleteDevice: async (
+    req: RefreshTokenRequest & RequestParams<{ deviceId: string }>,
+    res: Response
+  ) => {
+    // дописть
     const result = await deviceService.deleteDevice(req.params.deviceId);
     if (!result.data) {
       res.sendStatus(HTTP_STATUS_CODES[result.status]);
