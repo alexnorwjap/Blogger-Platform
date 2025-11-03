@@ -9,7 +9,7 @@ import { deviceRoutes } from './features/device/router/deviceRouter';
 import cookieParser from 'cookie-parser';
 
 export const routerPaths = {
-  devices: '/devices',
+  devices: 'security/devices',
   users: '/users',
   blogs: '/blogs',
   posts: '/posts',
