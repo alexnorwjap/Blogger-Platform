@@ -16,12 +16,14 @@ export const refreshTokenGuard = async (
     res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
     return;
   }
+  console.log(refreshToken, 'refreshToken');
 
   const deviceData = jwtService.getDeviceDataByToken(refreshToken);
   if (!deviceData) {
     res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
     return;
   }
+  console.log(deviceData, 'deviceData');
   const isTokenExpired = await jwtService.checkTokenExpiration(
     deviceData.id,
     new Date(deviceData.lastActiveDate)
@@ -31,6 +33,7 @@ export const refreshTokenGuard = async (
     res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
     return;
   }
+  console.log(isTokenExpired, 'isToke,nExpired');
 
   req.deviceId = deviceData.id;
   req.lastActiveDate = new Date(deviceData.lastActiveDate);

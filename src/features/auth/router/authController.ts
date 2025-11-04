@@ -11,6 +11,7 @@ import { deviceQueryRepository } from '../../device/repository/deviceQueryReposi
 class AuthController {
   // updated
   async login(req: RequestBody<AuthDto>, res: Response) {
+    console.log(req.body, 'req.body');
     const loginResult = await authService.login(req.body, {
       ip: req.ip || 'Unknown ip',
       title: req.headers['user-agent'] || 'Unknown agent',
