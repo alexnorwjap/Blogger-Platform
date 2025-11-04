@@ -8,7 +8,7 @@ export const jwtService = {
   },
 
   generateRefreshToken: (dto: { deviceId: string; lastActiveDate: Date }): string => {
-    return jwt.sign({ dto }, SETTINGS.JWT_SECRET, { expiresIn: '20seconds' });
+    return jwt.sign({ ...dto }, SETTINGS.JWT_SECRET, { expiresIn: '20seconds' });
   },
 
   getDeviceDataByToken: (token: string): { deviceId: string; lastActiveDate: string } | null => {
