@@ -7,14 +7,14 @@ export const jwtService = {
     return jwt.sign({ dto }, SETTINGS.JWT_SECRET, { expiresIn: '10seconds' });
   },
 
-  generateRefreshToken: (dto: { id: string; lastActiveDate: Date }): string => {
+  generateRefreshToken: (dto: { deviceId: string; lastActiveDate: Date }): string => {
     return jwt.sign({ dto }, SETTINGS.JWT_SECRET, { expiresIn: '20seconds' });
   },
 
-  getDeviceDataByToken: (token: string): { id: string; lastActiveDate: string } | null => {
+  getDeviceDataByToken: (token: string): { deviceId: string; lastActiveDate: string } | null => {
     try {
       const result = jwt.verify(token, SETTINGS.JWT_SECRET) as {
-        dto: { id: string; lastActiveDate: string };
+        dto: { deviceId: string; lastActiveDate: string };
       };
       return result ? result.dto : null;
     } catch (error) {
@@ -31,8 +31,8 @@ export const jwtService = {
     }
   },
 
-  checkTokenExpiration: async (id: string, lastActiveDate: Date): Promise<boolean> => {
-    const device = await deviceQueryRepository.getDeviceById(id);
+  checkTokenExpiration: async (deviceId: string, lastActiveDate: Date): Promise<boolean> => {
+    const device = await deviceQueryRepository.getDeviceById(deviceId);
     return device ? device.lastActiveDate.getTime() !== lastActiveDate.getTime() : true;
   },
 };

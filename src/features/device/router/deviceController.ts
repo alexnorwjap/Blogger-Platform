@@ -19,12 +19,12 @@ export const deviceController = {
   },
   //  актуально ли ! - использовать
   deletedAllDevices: async (req: RefreshTokenRequest, res: Response) => {
-    const userId = await deviceQueryRepository.getDeviceById(req.deviceId!);
-    if (!userId) {
+    const device = await deviceQueryRepository.getDeviceById(req.deviceId!);
+    if (!device) {
       res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
       return;
     }
-    const result = await deviceService.deleteAllDevicesByUserId(userId.userId);
+    const result = await deviceService.deleteAllDevicesByUserId(device.userId);
     if (!result.data) {
       res.sendStatus(HTTP_STATUS_CODES[result.status]);
       return;

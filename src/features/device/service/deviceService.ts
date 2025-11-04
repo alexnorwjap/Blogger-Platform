@@ -8,7 +8,7 @@ class DeviceService {
 
   async createDevice(
     dto: InputCreateDeviceDto
-  ): Promise<{ id: string; lastActiveDate: Date } | null> {
+  ): Promise<{ deviceId: string; lastActiveDate: Date } | null> {
     const newDate = new Date();
     const device = {
       ip: dto.ip,
@@ -19,7 +19,7 @@ class DeviceService {
     const result = await this.deviceRepository.create(device);
     return result
       ? {
-          id: result,
+          deviceId: result,
           lastActiveDate: newDate,
         }
       : null;

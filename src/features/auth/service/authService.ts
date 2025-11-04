@@ -56,7 +56,7 @@ export class AuthService {
     }
     const accessToken = jwtService.generateToken(device.userId);
     const refreshToken = jwtService.generateRefreshToken({
-      id: deviceId,
+      deviceId: deviceId,
       lastActiveDate: newDate,
     });
     return createResult('SUCCESS', {

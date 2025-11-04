@@ -25,7 +25,7 @@ export const refreshTokenGuard = async (
   }
   console.log(deviceData, 'deviceData');
   const isTokenExpired = await jwtService.checkTokenExpiration(
-    deviceData.id,
+    deviceData.deviceId,
     new Date(deviceData.lastActiveDate)
   );
 
@@ -35,7 +35,7 @@ export const refreshTokenGuard = async (
   }
   console.log(isTokenExpired, 'isToke,nExpired');
 
-  req.deviceId = deviceData.id;
+  req.deviceId = deviceData.deviceId;
   req.lastActiveDate = new Date(deviceData.lastActiveDate);
   next();
 };
