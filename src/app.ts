@@ -20,6 +20,7 @@ export const routerPaths = {
 };
 
 export const setupApp = async (app: Express) => {
+  app.set('trust proxy', true);
   app.use(express.json());
   app.use(cookieParser());
   app.use(routerPaths.clearDb, getClearDbRouter());
