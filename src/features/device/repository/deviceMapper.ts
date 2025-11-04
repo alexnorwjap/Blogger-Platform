@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { DeviceModel } from '../model/deviceModel';
+import { DeviceModel, DeviceViewModel } from '../model/deviceModel';
 
 type DeviceEntity = {
   _id: ObjectId;
@@ -10,7 +10,15 @@ type DeviceEntity = {
 };
 
 class DeviceMapper {
-  toDomain(device: DeviceEntity): DeviceModel {
+  toViewModel(device: DeviceEntity): DeviceViewModel {
+    return {
+      ip: device.ip,
+      title: device.title,
+      lastActiveDate: device.lastActiveDate,
+      deviceId: device._id.toString(),
+    };
+  }
+  toModel(device: DeviceEntity): DeviceModel {
     return {
       ip: device.ip,
       title: device.title,

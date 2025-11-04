@@ -5,4 +5,11 @@ type DeviceModel = {
   userId: string;
 };
 
-export type { DeviceModel };
+type DeviceViewModel = {
+  ip: string;
+  title: string;
+  lastActiveDate: Date;
+  deviceId: string;
+};
+
+export type { DeviceModel, DeviceViewModel };

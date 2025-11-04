@@ -12,10 +12,6 @@ export const deviceController = {
       return;
     }
     const devices = await deviceQueryRepository.getDevicesByUserId(userId.userId);
-    if (!devices) {
-      res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
-      return;
-    }
     res.status(HTTP_STATUS_CODES.SUCCESS).send(devices);
   },
   //  актуально ли ! - использовать
