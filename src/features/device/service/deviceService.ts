@@ -32,12 +32,12 @@ class DeviceService {
 
   async deleteDevice(deviceId: string): Promise<Result<boolean>> {
     const result = await this.deviceRepository.delete(deviceId);
-    return result ? createResult('SUCCESS', result) : createResult('UNAUTHORIZED', result);
+    return result ? createResult('NO_CONTENT', result) : createResult('NOT_FOUND', result);
   }
 
   async deleteAllOtherDevicesByUserId(userId: string, deviceId: string): Promise<Result<boolean>> {
     const result = await this.deviceRepository.deleteAllOther(userId, deviceId);
-    return result ? createResult('NO_CONTENT', result) : createResult('BAD_REQUEST', result);
+    return result ? createResult('NO_CONTENT', result) : createResult('NOT_FOUND', result);
   }
 }
 

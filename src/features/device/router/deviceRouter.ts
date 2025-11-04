@@ -1,8 +1,8 @@
 import express from 'express';
 import { deviceController } from './deviceController';
 import { refreshTokenGuard } from '../../../shared/middlewares/refreshTokenGuard';
-import { idValidation } from '../../../shared/middlewares/id-validation';
 import { resultIdValidation } from '../../../shared/middlewares/resultIdValidation';
+import { deviceIdValidation } from '../../../shared/middlewares/deviceIdValidation';
 
 export const deviceRoutes = () => {
   const router = express.Router();
@@ -12,7 +12,7 @@ export const deviceRoutes = () => {
   router.delete(
     '/:deviceId',
     refreshTokenGuard,
-    idValidation,
+    deviceIdValidation,
     resultIdValidation,
     deviceController.deleteDevice
   );
