@@ -14,9 +14,10 @@ export const jwtService = {
   getDeviceDataByToken: (token: string): { deviceId: string; lastActiveDate: string } | null => {
     try {
       const result = jwt.verify(token, SETTINGS.JWT_SECRET) as {
-        dto: { deviceId: string; lastActiveDate: string };
+        deviceId: string;
+        lastActiveDate: string;
       };
-      return result ? result.dto : null;
+      return result ? result : null;
     } catch (error) {
       return null;
     }
