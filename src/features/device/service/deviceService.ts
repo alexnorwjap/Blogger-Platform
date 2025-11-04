@@ -35,9 +35,9 @@ class DeviceService {
     return result ? createResult('SUCCESS', result) : createResult('UNAUTHORIZED', result);
   }
 
-  async deleteAllDevicesByUserId(userId: string): Promise<Result<boolean>> {
-    const result = await this.deviceRepository.deleteAll(userId);
-    return result ? createResult('SUCCESS', result) : createResult('UNAUTHORIZED', result);
+  async deleteAllOtherDevicesByUserId(userId: string, deviceId: string): Promise<Result<boolean>> {
+    const result = await this.deviceRepository.deleteAllOther(userId, deviceId);
+    return result ? createResult('NO_CONTENT', result) : createResult('BAD_REQUEST', result);
   }
 }
 

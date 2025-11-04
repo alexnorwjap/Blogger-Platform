@@ -8,7 +8,7 @@ export const deviceRoutes = () => {
   const router = express.Router();
 
   router.get('/', refreshTokenGuard, deviceController.getDevices);
-  router.delete('/', refreshTokenGuard, deviceController.deletedAllDevices);
+  router.delete('/', refreshTokenGuard, deviceController.deletedAllOtherDevices);
   router.delete(
     '/:deviceId',
     refreshTokenGuard,

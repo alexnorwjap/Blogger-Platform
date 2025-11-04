@@ -18,13 +18,13 @@ export const deviceController = {
     res.status(HTTP_STATUS_CODES.SUCCESS).send(devices);
   },
   //  актуально ли ! - использовать
-  deletedAllDevices: async (req: RefreshTokenRequest, res: Response) => {
+  deletedAllOtherDevices: async (req: RefreshTokenRequest, res: Response) => {
     const device = await deviceQueryRepository.getDeviceById(req.deviceId!);
     if (!device) {
       res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
       return;
     }
-    const result = await deviceService.deleteAllDevicesByUserId(device.userId);
+    const result = await deviceService.deleteAllOtherDevicesByUserId(device.userId, req.deviceId!);
     if (!result.data) {
       res.sendStatus(HTTP_STATUS_CODES[result.status]);
       return;
@@ -37,7 +37,25 @@ export const deviceController = {
     req: RefreshTokenRequest & RequestParams<{ deviceId: string }>,
     res: Response
   ) => {
-    // дописть
+    const [deviceFromToken, deviceFromParams] = await Promise.all([
+      deviceQueryRepository.getDeviceById(req.deviceId!),
+      deviceQueryRepository.getDeviceById(req.params.deviceId),
+    ]);
+
+    if (!deviceFromToken) {
+      res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
+      return;
+    }
+
+    if (!deviceFromParams) {
+      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
+      return;
+    }
+
+    if (deviceFromToken.userId !== deviceFromParams.userId) {
+      res.sendStatus(HTTP_STATUS_CODES.FORBIDDEN);
+      return;
+    }
     const result = await deviceService.deleteDevice(req.params.deviceId);
     if (!result.data) {
       res.sendStatus(HTTP_STATUS_CODES[result.status]);

@@ -23,8 +23,11 @@ export class DeviceRepository {
     return result.deletedCount > 0;
   }
 
-  async deleteAll(userId: string): Promise<boolean> {
-    const result = await deviceCollection.deleteMany({ userId });
+  async deleteAllOther(userId: string, deviceId: string): Promise<boolean> {
+    const result = await deviceCollection.deleteMany({
+      userId,
+      _id: { $ne: new ObjectId(deviceId) },
+    });
     return result.deletedCount > 0;
   }
 }
