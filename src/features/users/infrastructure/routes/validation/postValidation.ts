@@ -9,15 +9,13 @@ const login = body('login')
   .withMessage('must be unique');
 
 const email = body('email')
+  .exists()
+  .withMessage('email is required')
   .trim()
   .notEmpty()
-  .custom(value => {
-    const regex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
-    if (!regex.test(value)) {
-      throw new Error('must be unique');
-    }
-    return true;
-  });
+  .withMessage('must be correct')
+  .isEmail()
+  .withMessage('must be a valid email address');
 
 const password = body('password')
   .trim()
