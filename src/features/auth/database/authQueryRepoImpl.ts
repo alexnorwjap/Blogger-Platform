@@ -6,7 +6,6 @@ import { ObjectId } from 'mongodb';
 import { AuthQueryMapper } from './authQueryMapper';
 import { authModel } from '../model/authModel';
 import { AuthMapper } from './authMapper';
-import { AuthDto } from '../repository/dto/authDto';
 
 class AuthQueryRepoImpl implements AuthQueryRepository {
   async getProfile(userId: string): Promise<AuthViewModel | null> {
@@ -39,6 +38,14 @@ class AuthQueryRepoImpl implements AuthQueryRepository {
 
   async findByDeviceId(deviceId: string): Promise<authModel | null> {
     const user = await userCollection.findOne({ 'devices.deviceId': deviceId });
+    if (!user) {
+      return null;
+    }
+    return AuthMapper.toService(user);
+  }
+
+  async findByRecoveryCode(recoveryCode: string): Promise<authModel | null> {
+    const user = await userCollection.findOne({ recoveryCode });
     if (!user) {
       return null;
     }

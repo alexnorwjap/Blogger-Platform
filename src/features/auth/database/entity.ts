@@ -11,10 +11,8 @@ export type entityDB = {
     confirmationCode: string;
     expirationDate: Date;
   };
-  devices?: {
-    deviceId: string;
-    date: Date;
-  }[];
+  recoveryCode?: string;
+  recoveryCodeExpirationDate?: Date;
 };
 
 export type inputCreateDto = {

@@ -1,4 +1,3 @@
-import { HTTP_STATUS_CODES } from '../../../../shared/constants/http-status';
 import { Result } from '../../../../shared/utils/result-object';
 import { authModel } from '../../model/authModel';
 import { InputRegistrationDto } from '../../repository/dto/authDto';

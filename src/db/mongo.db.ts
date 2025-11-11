@@ -38,6 +38,8 @@ export async function runDB(url: string): Promise<void> {
     await client.connect();
     await db.command({ ping: 1 });
     console.log('✅ Connected to the database');
+    await deviceCollection.createIndex({ lastActiveDate: 1 }, { expireAfterSeconds: 60 });
+    await requestLogCollection.createIndex({ date: 1 }, { expireAfterSeconds: 60 });
   } catch (e) {
     await client.close();
     throw new Error(`❌ Database not connected: ${e}`);

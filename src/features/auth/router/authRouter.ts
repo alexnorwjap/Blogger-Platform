@@ -7,6 +7,7 @@ import { emailValidation, registrationValidation } from './validation/registrati
 import { codeValidation } from './validation/codeValidation';
 import { requestLogValidation } from '../../../shared/middlewares/requestLogValidation';
 import { refreshTokenGuard } from '../../../shared/middlewares/refreshTokenGuard';
+import { passwordValidation } from '../../../shared/middlewares/passwordValidation';
 
 export const authRoutes = () => {
   const router = express.Router();
@@ -44,6 +45,22 @@ export const authRoutes = () => {
 
   router.post('/logout', refreshTokenGuard, authController.logout);
   router.post('/refresh-token', refreshTokenGuard, authController.refreshToken);
+
+  router.post(
+    '/password-recovery',
+    requestLogValidation,
+    emailValidation,
+    inputValidationResult,
+    authController.passwordRecoveryCode
+  );
+
+  router.post(
+    '/new-password',
+    requestLogValidation,
+    passwordValidation,
+    inputValidationResult,
+    authController.passwordRecovery
+  );
 
   return router;
 };

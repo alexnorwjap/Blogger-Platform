@@ -11,10 +11,8 @@ export class AuthMapper {
       createdAt: entity.createdAt,
       isConfirmed: entity.isConfirmed,
       confirmation: entity.confirmation,
-      devices: entity.devices?.map(device => ({
-        deviceId: device.deviceId,
-        date: device.date,
-      })),
+      recoveryCode: entity.recoveryCode || '',
+      recoveryCodeExpirationDate: entity.recoveryCodeExpirationDate || new Date(0),
     };
   }
 }

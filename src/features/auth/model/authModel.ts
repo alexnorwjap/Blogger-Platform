@@ -10,9 +10,7 @@ export class authModel {
       confirmationCode: string;
       expirationDate: Date;
     },
-    readonly devices?: {
-      deviceId: string;
-      date: Date;
-    }[]
+    readonly recoveryCode: string,
+    readonly recoveryCodeExpirationDate: Date
   ) {}
 }

@@ -11,7 +11,7 @@ const login = body('login')
   .matches(/^[a-zA-Z0-9_-]*$/)
   .withMessage('must contain only letters, numbers, underscores and hyphens');
 
-const password = body('password')
+const passwordValidation = body('password')
   .exists()
   .withMessage('password is required')
   .trim()
@@ -29,4 +29,4 @@ export const emailValidation = body('email')
   .isEmail()
   .withMessage('must be a valid email address');
 
-export const registrationValidation = [login, password, emailValidation];
+export const registrationValidation = [login, passwordValidation, emailValidation];

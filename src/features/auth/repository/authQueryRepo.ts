@@ -8,4 +8,5 @@ export interface AuthQueryRepository {
   findByConfirmationCode(code: string): Promise<authModel | null>;
   findByEmail(email: string): Promise<authModel | null>;
   findByDeviceId(deviceId: string): Promise<authModel | null>;
+  findByRecoveryCode(recoveryCode: string): Promise<authModel | null>;
 }

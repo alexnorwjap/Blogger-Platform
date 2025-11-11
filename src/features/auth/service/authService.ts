@@ -1,5 +1,4 @@
 import { AuthDto } from '../repository/dto/authDto';
-import { AuthRepository } from '../repository/authRepo';
 import bcrypt from 'bcryptjs';
 import { AuthRepoImpl } from '../database/authRepoImpl';
 import { InputRegistrationDto } from '../repository/dto/authDto';
@@ -9,15 +8,14 @@ import { add } from 'date-fns/add';
 import { jwtService } from '../adapter/jwtService';
 import { createResult, Result } from '../../../shared/utils/result-object';
 import { inExistingUser } from './helpers/inExistingUser';
-import { checkPassword, prepareDevice } from './helpers/checkPassword';
+import { checkPassword } from './helpers/checkPassword';
 import { emailAdapter } from '../adapter/emailAdapter';
-import { DeviceIdType, LoginRequestInfo, TokensType } from '../authType';
+import { LoginRequestInfo, TokensType } from '../authType';
 import { deviceService } from '../../device/service/deviceService';
-import { deviceQueryRepository } from '../../device/repository/deviceQueryRepository';
 import { DeviceModel } from '../../device/model/deviceModel';
+
 export class AuthService {
   constructor(readonly authRepository: AuthRepoImpl) {}
-  // updated
   async login(dto: AuthDto, reqInfo: LoginRequestInfo): Promise<Result<TokensType | null>> {
     const user = await this.authRepository.findByLoginOrEmail(dto);
     if (!user) {
@@ -47,7 +45,6 @@ export class AuthService {
     });
   }
 
-  // updated
   async refreshToken(device: DeviceModel, deviceId: string): Promise<Result<TokensType | null>> {
     const newDate = new Date();
     const result = await deviceService.updateDevice(deviceId, newDate);
@@ -66,9 +63,9 @@ export class AuthService {
   }
 
   async registration(
-    dto: InputRegistrationDto,
-    existingUser: authModel | null
+    dto: InputRegistrationDto
   ): Promise<Result<{ confirmationCode: string } | null>> {
+    const existingUser = await this.authRepository.findByLoginOrEmail(dto);
     if (existingUser) {
       return inExistingUser(existingUser, dto);
     }
@@ -100,7 +97,7 @@ export class AuthService {
     });
   }
 
-  async registrationConfirmation(user: authModel): Promise<Result<boolean | null>> {
+  async registrationConfirmation(user: authModel | null): Promise<Result<boolean | null>> {
     if (!user || user.isConfirmed) {
       return createResult('BAD_REQUEST', null, 'errorsMessages', [
         { message: 'Invalid confirmation code or user already confirmed', field: 'code' },
@@ -148,6 +145,10 @@ export class AuthService {
         expirationDate: add(new Date(), { minutes: 15 }),
       },
     });
+    emailAdapter.sendEmail(user.email, confirmationCode).catch(e => {
+      throw new Error('email sending error');
+    });
+
     return result
       ? createResult('NO_CONTENT', confirmationCode)
       : createResult('BAD_REQUEST', null, 'errorsMessages', [
@@ -155,12 +156,40 @@ export class AuthService {
         ]);
   }
 
-  // updated
   async logout(deviceId: string): Promise<Result<boolean>> {
     const result = await deviceService.deleteDevice(deviceId);
     return result.data
       ? createResult('NO_CONTENT', result.data)
       : createResult('BAD_REQUEST', result.data);
+  }
+
+  async passwordRecoveryCode(user: authModel): Promise<Result<boolean | null>> {
+    const recoveryCode = randomUUID();
+    const result = await this.authRepository.addRecoveryCode(user.userId, {
+      recoveryCode: recoveryCode,
+      recoveryCodeExpirationDate: add(new Date(), { minutes: 15 }),
+    });
+    emailAdapter.sendPasswordRecoveryEmail(user.email, recoveryCode).catch(e => {
+      throw new Error('email sending error');
+    });
+    return result
+      ? createResult('NO_CONTENT', result)
+      : createResult('BAD_REQUEST', result, 'errorsMessages', [
+          { field: 'confirmation-code', message: 'Something went wrong, try later' },
+        ]);
+  }
+
+  async passwordRecovery(user: authModel, newPassword: string): Promise<Result<boolean | null>> {
+    if (user.recoveryCodeExpirationDate.getTime() < Date.now()) {
+      return createResult('BAD_REQUEST', null);
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const result = await this.authRepository.update(user.userId, {
+      password: hashedPassword,
+      recoveryCode: '',
+      recoveryCodeExpirationDate: new Date(0),
+    });
+    return result ? createResult('NO_CONTENT', result) : createResult('BAD_REQUEST', result);
   }
 }
 

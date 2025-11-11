@@ -22,4 +22,22 @@ type InputConfirmationDto = {
   };
 };
 
-export { AuthDto, InputRegistrationDto, InputConfirmationDto, DeviceDto };
+type recoveryCodeDto = {
+  recoveryCode: string;
+  recoveryCodeExpirationDate: Date;
+};
+
+type passwordRecoveryDto = {
+  password: string;
+  recoveryCode: string;
+  recoveryCodeExpirationDate: Date;
+};
+
+export {
+  AuthDto,
+  InputRegistrationDto,
+  InputConfirmationDto,
+  DeviceDto,
+  recoveryCodeDto,
+  passwordRecoveryDto,
+};
