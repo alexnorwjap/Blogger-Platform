@@ -1,14 +1,15 @@
 import { DeviceRepository } from '../repository/deviceRepository';
 import { InputCreateDeviceDto } from './typeService';
-import { ObjectId } from 'mongodb';
 import { createResult, Result } from '../../../shared/utils/result-object';
+import { injectable, inject } from 'inversify';
 
-class DeviceService {
-  constructor(readonly deviceRepository: DeviceRepository) {}
+@injectable()
+export class DeviceService {
+  constructor(@inject(DeviceRepository) readonly deviceRepository: DeviceRepository) {}
 
   async createDevice(
     dto: InputCreateDeviceDto
-  ): Promise<{ deviceId: string; lastActiveDate: Date } | null> {
+  ): Promise<{ deviceId: string; lastActiveDate: Date }> {
     const newDate = new Date();
     const device = {
       ip: dto.ip,
@@ -17,17 +18,12 @@ class DeviceService {
       userId: dto.userId,
     };
     const result = await this.deviceRepository.create(device);
-    return result
-      ? {
-          deviceId: result,
-          lastActiveDate: newDate,
-        }
-      : null;
+    return { deviceId: result, lastActiveDate: newDate };
   }
 
-  async updateDevice(deviceId: string, lastActiveDate: Date): Promise<boolean | null> {
+  async updateDevice(deviceId: string, lastActiveDate: Date): Promise<boolean> {
     const result = await this.deviceRepository.update(deviceId, lastActiveDate);
-    return result ? result : null;
+    return result;
   }
 
   async deleteDevice(deviceId: string): Promise<Result<boolean>> {
@@ -40,5 +36,3 @@ class DeviceService {
     return result ? createResult('NO_CONTENT', result) : createResult('NOT_FOUND', result);
   }
 }
-
-export const deviceService = new DeviceService(new DeviceRepository());

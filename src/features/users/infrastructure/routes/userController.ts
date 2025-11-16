@@ -2,17 +2,24 @@ import { HTTP_STATUS_CODES } from '../../../../shared/constants/http-status';
 import { RequestBody, RequestParams } from '../../../../shared/types/api.types';
 import { UserViewModel } from '../../models/User';
 import { CreateUserDto } from '../../service/userServiceDto';
-import { userService } from '../../service/userService';
+import { UsersService } from '../../service/userService';
 import { WrapValidErrorsType } from '../../../../shared/types/errors-type';
 import { Response } from 'express';
-import { usersQueryRepository } from '../../infrastructure/db/repositories/UsersQueryRepoImpl';
+import { UsersQueryRepoImpl } from '../../infrastructure/db/repositories/UsersQueryRepoImpl';
 import { queryParamsDto } from '../../repositories/dto/queryParamsDto';
 import { UsersViewModel } from '../../models/UsersViewModel';
 import { RequestQuery } from '../../../../shared/types/api.types';
+import { inject, injectable } from 'inversify';
 
-class UserController {
-  async getUsersList(req: RequestQuery<queryParamsDto>, res: Response<UsersViewModel>) {
-    const users = await usersQueryRepository.getAll(req.query);
+@injectable()
+export class UsersController {
+  constructor(
+    @inject(UsersQueryRepoImpl) readonly usersQueryRepository: UsersQueryRepoImpl,
+    @inject(UsersService) readonly usersService: UsersService
+  ) {}
+
+  getUsersList = async (req: RequestQuery<queryParamsDto>, res: Response<UsersViewModel>) => {
+    const users = await this.usersQueryRepository.getAll(req.query);
     if (users.items.length === 0)
       return res.status(HTTP_STATUS_CODES.SUCCESS).send({
         pagesCount: 0,
@@ -22,13 +29,13 @@ class UserController {
         items: [],
       });
     return res.status(HTTP_STATUS_CODES.SUCCESS).send(users);
-  }
+  };
 
-  async createUser(
+  createUser = async (
     req: RequestBody<CreateUserDto>,
     res: Response<UserViewModel | WrapValidErrorsType>
-  ) {
-    const existingUser = await usersQueryRepository.findByLoginOrEmail(
+  ) => {
+    const existingUser = await this.usersQueryRepository.findByLoginOrEmail(
       req.body.login,
       req.body.email
     );
@@ -42,19 +49,20 @@ class UserController {
         ],
       });
     }
-    const newUserId = await userService.createUser(req.body);
-    if (!newUserId.data) return res.status(HTTP_STATUS_CODES[newUserId.status]);
-    const newUser = await usersQueryRepository.getUserById(newUserId.data);
-    if (!newUser) return res.status(HTTP_STATUS_CODES.BAD_REQUEST);
-    res.status(HTTP_STATUS_CODES.CREATED).send(newUser);
-  }
 
-  async deleteUser(req: RequestParams<{ id: string }>, res: Response) {
-    const resultDelete = await userService.deleteUser(req.params.id);
+    const newUserId = await this.usersService.createUser(req.body);
+    if (!newUserId.data) return res.status(HTTP_STATUS_CODES[newUserId.status]);
+
+    const newUser = await this.usersQueryRepository.getUserById(newUserId.data);
+    if (!newUser) return res.status(HTTP_STATUS_CODES.BAD_REQUEST);
+
+    res.status(HTTP_STATUS_CODES.CREATED).send(newUser);
+  };
+
+  deleteUser = async (req: RequestParams<{ id: string }>, res: Response) => {
+    const resultDelete = await this.usersService.deleteUser(req.params.id);
 
     if (!resultDelete.data) return res.sendStatus(HTTP_STATUS_CODES[resultDelete.status]);
     res.sendStatus(HTTP_STATUS_CODES[resultDelete.status]);
-  }
+  };
 }
-
-export const userController = new UserController();

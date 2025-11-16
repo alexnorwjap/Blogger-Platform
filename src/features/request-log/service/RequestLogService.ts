@@ -1,15 +1,18 @@
 import { Result } from '../../../shared/utils/result-object';
-import { RequestLogRepository } from '../repository/RequestLogRepository';
 import { createResult } from '../../../shared/utils/result-object';
 import { RequestLogRepositoryImpl } from '../database/repository/RequestLogRepositoryImpl';
+import { inject, injectable } from 'inversify';
 
 type InputAddRequestLogDto = {
   ip: string;
   url: string;
 };
 
-class RequestLogService {
-  constructor(readonly requestLogRepository: RequestLogRepository) {}
+@injectable()
+export class RequestLogService {
+  constructor(
+    @inject(RequestLogRepositoryImpl) readonly requestLogRepository: RequestLogRepositoryImpl
+  ) {}
 
   async addRequestLog(dto: InputAddRequestLogDto): Promise<Result<boolean>> {
     const newRequestLog = {
@@ -18,12 +21,8 @@ class RequestLogService {
       date: new Date(),
     };
     const resultRequesLogCreate = await this.requestLogRepository.addRequestLog(newRequestLog);
-    if (!resultRequesLogCreate) {
-      return createResult('BAD_REQUEST', resultRequesLogCreate, 'Request log not added');
-    } else {
-      return createResult('CREATED', resultRequesLogCreate);
-    }
+    if (!resultRequesLogCreate) return createResult('BAD_REQUEST', resultRequesLogCreate);
+
+    return createResult('CREATED', resultRequesLogCreate);
   }
 }
-
-export const requestLogService = new RequestLogService(new RequestLogRepositoryImpl());

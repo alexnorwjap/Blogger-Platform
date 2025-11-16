@@ -4,8 +4,11 @@ import { inputValidationResult } from '../../../shared/middlewares/result-valida
 import { authorization } from '../../../shared/middlewares/authorization';
 import { idValidation } from '../../../shared/middlewares/id-validation';
 import { postInputDtoValidationForBlog } from './validation/postValidationForBlog';
-import { blogController } from './blogController';
 import { resultIdValidation } from '../../../shared/middlewares/resultIdValidation';
+import { BlogController } from './blogController';
+import container from '../../../ioc';
+
+const blogController = container.get<BlogController>(BlogController);
 
 export const getBlogsRoutes = () => {
   const router = express.Router();
@@ -14,7 +17,6 @@ export const getBlogsRoutes = () => {
 
   router.get('/:id/posts', idValidation, resultIdValidation, blogController.getPostsForBlog);
 
-  // review complete
   router.get('/:id', idValidation, resultIdValidation, blogController.getBlog);
 
   router.post(

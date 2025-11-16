@@ -1,10 +1,13 @@
 import express from 'express';
-import { commentsController } from './commentsController';
 import { authorizationBearer } from '../../../shared/middlewares/authorizationBearer';
 import { contentCommentValidation } from '../../../features/post/router/postValidation';
 import { inputValidationResult } from '../../../shared/middlewares/result-validation';
 import { idValidation } from '../../../shared/middlewares/id-validation';
 import { resultIdValidation } from '../../../shared/middlewares/resultIdValidation';
+import container from '../../../ioc';
+import { CommentsController } from './commentsController';
+
+const commentsController = container.get<CommentsController>(CommentsController);
 
 export const commentsRoutes = () => {
   const router = express.Router();

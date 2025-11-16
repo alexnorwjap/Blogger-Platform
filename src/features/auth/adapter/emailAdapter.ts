@@ -1,7 +1,9 @@
 import nodemailer from 'nodemailer';
 import { SETTINGS } from '../../../shared/settings/settings';
+import { injectable } from 'inversify';
 
-class EmailAdapter {
+@injectable()
+export class EmailAdapter {
   async sendEmail(email: string, confirmationCode: string) {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
@@ -42,5 +44,3 @@ class EmailAdapter {
     });
   }
 }
-
-export const emailAdapter = new EmailAdapter();

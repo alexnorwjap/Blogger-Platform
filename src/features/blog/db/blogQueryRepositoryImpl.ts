@@ -7,7 +7,9 @@ import { FilterSortPagination } from './entitiesQuery';
 import { BlogModel } from '../models/Blog';
 import { ObjectId } from 'mongodb';
 import { QueryParamsOutput } from '../router/helper/queryNormalize';
+import { injectable } from 'inversify';
 
+@injectable()
 export class BlogQueryRepositoryImpl implements BlogQueryRepository {
   async getAll(query: QueryParamsOutput): Promise<BlogsViewModel> {
     const queryParams: FilterSortPagination = BlogQueryMapper.toEntity(query);
@@ -28,5 +30,3 @@ export class BlogQueryRepositoryImpl implements BlogQueryRepository {
     return blog ? BlogMapper.toDomain(blog) : null;
   }
 }
-
-export const blogQueryRepository = new BlogQueryRepositoryImpl();

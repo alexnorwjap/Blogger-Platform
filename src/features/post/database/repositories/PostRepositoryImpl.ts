@@ -1,15 +1,16 @@
 import { PostRepository } from '../../repositories/postRepository';
-import { PostModel } from '../../models/Post';
 import { CreatePostDto, UpdatePostDto } from '../../repositories/dto/postRepoDto';
-import { PostMapper } from '../mappers/PostMapper';
 import { postCollection } from '../../../../db/mongo.db';
 import { ObjectId } from 'mongodb';
+import { injectable } from 'inversify';
+
+@injectable()
 export class PostRepositoryImpl implements PostRepository {
   async create(dto: CreatePostDto): Promise<string | null> {
     const result = await postCollection.insertOne({ _id: new ObjectId(), ...dto });
     return result.insertedId ? result.insertedId.toString() : null;
   }
-  // review complete
+
   async createByBlogId(dto: CreatePostDto): Promise<string | null> {
     const result = await postCollection.insertOne({ _id: new ObjectId(), ...dto });
     return result.insertedId ? result.insertedId.toString() : null;
@@ -29,6 +30,7 @@ export class PostRepositoryImpl implements PostRepository {
     );
     return result.modifiedCount > 0;
   }
+
   async delete(id: string): Promise<boolean> {
     const result = await postCollection.deleteOne({ _id: new ObjectId(id) });
     return result.deletedCount > 0;

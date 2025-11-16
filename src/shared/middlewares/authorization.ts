@@ -8,7 +8,10 @@ const ADMIN_CREDENTIAL_BASE64 = Buffer.from(
 ).toString('base64');
 
 const authorization = (req: CustomRequest, res: Response, next: NextFunction) => {
-  const auth = typeof req.headers['authorization'] === 'string' ? req.headers['authorization'] : null;
+  const auth =
+    typeof req.headers['authorization'] === 'string' ? req.headers['authorization'] : null;
+  console.log(auth);
+  console.log(ADMIN_CREDENTIAL_BASE64);
 
   if (!auth) {
     res.status(HTTP_STATUS_CODES.UNAUTHORIZED).send('Unauthorized');

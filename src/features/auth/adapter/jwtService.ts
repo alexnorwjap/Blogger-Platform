@@ -1,17 +1,22 @@
 import jwt from 'jsonwebtoken';
 import { SETTINGS } from '../../../shared/settings/settings';
-import { deviceQueryRepository } from '../../device/repository/deviceQueryRepository';
+import { DeviceQueryRepository } from '../../device/repository/deviceQueryRepository';
+import { inject, injectable } from 'inversify';
 
-export const jwtService = {
-  generateToken: (dto: string): string => {
+@injectable()
+export class JwtService {
+  constructor(
+    @inject(DeviceQueryRepository) readonly deviceQueryRepository: DeviceQueryRepository
+  ) {}
+  generateToken(dto: string): string {
     return jwt.sign({ dto }, SETTINGS.JWT_SECRET, { expiresIn: '10seconds' });
-  },
+  }
 
-  generateRefreshToken: (dto: { deviceId: string; lastActiveDate: Date }): string => {
+  generateRefreshToken(dto: { deviceId: string; lastActiveDate: Date }): string {
     return jwt.sign({ ...dto }, SETTINGS.JWT_SECRET, { expiresIn: '20seconds' });
-  },
+  }
 
-  getDeviceDataByToken: (token: string): { deviceId: string; lastActiveDate: string } | null => {
+  getDeviceDataByToken(token: string): { deviceId: string; lastActiveDate: string } | null {
     try {
       const result = jwt.verify(token, SETTINGS.JWT_SECRET) as {
         deviceId: string;
@@ -21,19 +26,19 @@ export const jwtService = {
     } catch (error) {
       return null;
     }
-  },
+  }
 
-  getUserIdByToken: (token: string): string | null => {
+  getUserIdByToken(token: string): string | null {
     try {
       const result = jwt.verify(token, SETTINGS.JWT_SECRET) as { dto: string };
       return result?.dto ?? null;
     } catch (error) {
       return null;
     }
-  },
+  }
 
-  checkTokenExpiration: async (deviceId: string, lastActiveDate: Date): Promise<boolean> => {
-    const device = await deviceQueryRepository.getDeviceById(deviceId);
+  async checkTokenExpiration(deviceId: string, lastActiveDate: Date): Promise<boolean> {
+    const device = await this.deviceQueryRepository.getDeviceById(deviceId);
     return device ? device.lastActiveDate.getTime() !== lastActiveDate.getTime() : true;
-  },
-};
+  }
+}

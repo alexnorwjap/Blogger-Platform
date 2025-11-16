@@ -1,7 +1,10 @@
 import { NextFunction, Response } from 'express';
 import { HTTP_STATUS_CODES } from '../constants/http-status';
-import { jwtService } from '../../features/auth/adapter/jwtService';
+import { JwtService } from '../../features/auth/adapter/jwtService';
 import { RefreshTokenRequest } from '../types/api.types';
+import container from '../../ioc';
+
+const jwtService = container.get<JwtService>(JwtService);
 
 export const refreshTokenGuard = async (
   req: RefreshTokenRequest,

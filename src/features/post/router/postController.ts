@@ -6,21 +6,32 @@ import {
 } from '../../../shared/types/api.types';
 import { queryParamsDto } from '../repositories/dto/queryRepoPostDto';
 import { PostsViewModel } from '../models/PostsViewModel';
-import { postQueryRepository } from '../database/repositories/PostQueryRepositoryImpl';
+import { PostQueryRepositoryImpl } from '../database/repositories/PostQueryRepositoryImpl';
 import { HTTP_STATUS_CODES } from '../../../shared/constants/http-status';
 import { Response } from 'express';
 import { PostModel } from '../models/Post';
-import { blogQueryRepository } from '../../blog/db/blogQueryRepositoryImpl';
-import { postService } from '../service/postService';
+import { BlogQueryRepositoryImpl } from '../../blog/db/blogQueryRepositoryImpl';
+import { PostService } from '../service/postService';
 import { InputPostDto } from '../service/serviceDto';
 import { queryPostNormalize } from './helper/queryPostNormalize';
-import { commentsQueryRepoImpl } from '../../comments/database/queryRepoImpl';
-import { commentsService } from '../../comments/service/commentsService';
-import { usersQueryRepository } from '../../users/infrastructure/db/repositories/UsersQueryRepoImpl';
+import { CommentsQueryRepoImpl } from '../../comments/database/commentsQueryRepoImpl';
+import { CommentsService } from '../../comments/service/commentsService';
+import { UsersQueryRepoImpl } from '../../users/infrastructure/db/repositories/UsersQueryRepoImpl';
+import { inject, injectable } from 'inversify';
 
-class PostController {
-  async getPostsList(req: RequestQuery<queryParamsDto>, res: Response<PostsViewModel>) {
-    const posts = await postQueryRepository.getAll(queryPostNormalize(req.query));
+@injectable()
+export class PostController {
+  constructor(
+    @inject(PostQueryRepositoryImpl) readonly postQueryRepository: PostQueryRepositoryImpl,
+    @inject(BlogQueryRepositoryImpl) readonly blogQueryRepository: BlogQueryRepositoryImpl,
+    @inject(PostService) readonly postService: PostService,
+    @inject(CommentsQueryRepoImpl) readonly commentsQueryRepo: CommentsQueryRepoImpl,
+    @inject(CommentsService) readonly commentsService: CommentsService,
+    @inject(UsersQueryRepoImpl) readonly usersQueryRepository: UsersQueryRepoImpl
+  ) {}
+
+  getPostsList = async (req: RequestQuery<queryParamsDto>, res: Response<PostsViewModel>) => {
+    const posts = await this.postQueryRepository.getAll(queryPostNormalize(req.query));
 
     if (posts.items.length === 0) {
       res.status(HTTP_STATUS_CODES.SUCCESS).send({
@@ -33,110 +44,85 @@ class PostController {
       return;
     }
     res.status(HTTP_STATUS_CODES.SUCCESS).send(posts);
-  }
+  };
 
-  async getPost(req: RequestParams<{ id: string }>, res: Response<PostModel>) {
-    const result = await postQueryRepository.getPostById(req.params.id);
-    if (!result) {
-      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
-      return;
-    }
+  getPost = async (req: RequestParams<{ id: string }>, res: Response<PostModel>) => {
+    const result = await this.postQueryRepository.getPostById(req.params.id);
+    if (!result) return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
+
     res.status(HTTP_STATUS_CODES.SUCCESS).send(result);
-  }
+  };
 
-  // review complete
-  async createPost(req: RequestBody<InputPostDto>, res: Response<PostModel>) {
-    const blogExist = await blogQueryRepository.getBlogById(req.body.blogId);
-    if (!blogExist) {
-      res.sendStatus(HTTP_STATUS_CODES.BAD_REQUEST);
-      return;
-    }
-    const postIdResult = await postService.createPost(req.body, blogExist.name);
-    if (!postIdResult.data) {
-      res.sendStatus(HTTP_STATUS_CODES[postIdResult.status]);
-      return;
-    }
-    const post = await postQueryRepository.getPostById(postIdResult.data);
-    if (!post) {
-      res.sendStatus(HTTP_STATUS_CODES.BAD_REQUEST);
-      return;
-    }
+  createPost = async (req: RequestBody<InputPostDto>, res: Response<PostModel>) => {
+    const blogExist = await this.blogQueryRepository.getBlogById(req.body.blogId);
+    if (!blogExist) return res.sendStatus(HTTP_STATUS_CODES.BAD_REQUEST);
+
+    const postIdResult = await this.postService.createPost(req.body, blogExist.name);
+    if (!postIdResult.data) return res.sendStatus(HTTP_STATUS_CODES[postIdResult.status]);
+
+    const post = await this.postQueryRepository.getPostById(postIdResult.data);
+    if (!post) return res.sendStatus(HTTP_STATUS_CODES.BAD_REQUEST);
+
     res.status(HTTP_STATUS_CODES.CREATED).send(post);
-  }
+  };
 
-  // review complete
-  async updatePost(req: RequestParams<{ id: string }>, res: Response) {
-    const resultUpdate = await postService.updatePost(req.params.id, req.body);
-    if (!resultUpdate.data) {
-      res.sendStatus(HTTP_STATUS_CODES[resultUpdate.status]);
-      return;
-    }
+  updatePost = async (req: RequestParams<{ id: string }>, res: Response) => {
+    const resultUpdate = await this.postService.updatePost(req.params.id, req.body);
+    if (!resultUpdate.data) return res.sendStatus(HTTP_STATUS_CODES[resultUpdate.status]);
+
     res.sendStatus(HTTP_STATUS_CODES[resultUpdate.status]);
-  }
+  };
 
-  // review complete
-  async deletePost(req: RequestParams<{ id: string }>, res: Response) {
-    const resultDelete = await postService.deletePost(req.params.id);
-    if (!resultDelete.data) {
-      return res.sendStatus(HTTP_STATUS_CODES[resultDelete.status]);
-    }
+  deletePost = async (req: RequestParams<{ id: string }>, res: Response) => {
+    const resultDelete = await this.postService.deletePost(req.params.id);
+    if (!resultDelete.data) return res.sendStatus(HTTP_STATUS_CODES[resultDelete.status]);
+
     res.sendStatus(HTTP_STATUS_CODES[resultDelete.status]);
-  }
+  };
 
-  // review complete
-  async getCommentsByPostId(req: RequestParams<{ id: string }>, res: Response) {
-    const post = await postQueryRepository.getPostById(req.params.id);
-    if (!post) {
-      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
-      return;
-    }
-    const result = await commentsQueryRepoImpl.getCommentsByPostId(
+  getCommentsByPostId = async (req: RequestParams<{ id: string }>, res: Response) => {
+    const post = await this.postQueryRepository.getPostById(req.params.id);
+    if (!post) return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
+
+    const result = await this.commentsQueryRepo.getCommentsByPostId(
       req.params.id,
       queryPostNormalize(req.query)
     );
     if (result.items.length === 0) {
-      res.status(HTTP_STATUS_CODES.SUCCESS).send({
+      return res.status(HTTP_STATUS_CODES.SUCCESS).send({
         pagesCount: 0,
         page: 0,
         pageSize: 0,
         totalCount: 0,
         items: [],
       });
-      return;
     }
     res.status(HTTP_STATUS_CODES.SUCCESS).send(result);
-  }
+  };
 
-  // review complete
-  async createCommentByPostId(
+  createCommentByPostId = async (
     req: AuthRequestParamsAndBody<{ id: string }, { content: string }>,
     res: Response
-  ) {
-    const post = await postQueryRepository.getPostById(req.params.id);
-    if (!post || !req.user) {
-      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
-      return;
-    }
+  ) => {
+    const post = await this.postQueryRepository.getPostById(req.params.id);
+    if (!post || !req.user) return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
 
-    const currentUser = await usersQueryRepository.getUserById(req.user);
-    if (!currentUser) {
-      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
-      return;
-    }
-    const resultCreateComment = await commentsService.createCommentByPostId(
+    const currentUser = await this.usersQueryRepository.getUserById(req.user);
+    if (!currentUser) return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
+
+    const resultCreateComment = await this.commentsService.createCommentByPostId(
       req.params.id,
       req.body.content,
       currentUser
     );
 
-    if (resultCreateComment.data) {
-      const result = await commentsQueryRepoImpl.getCommentById(resultCreateComment.data);
-      res.status(HTTP_STATUS_CODES[resultCreateComment.status]).send(result);
-    } else {
-      res.sendStatus(HTTP_STATUS_CODES[resultCreateComment.status]);
-      return;
+    if (!resultCreateComment.data) {
+      return res.sendStatus(HTTP_STATUS_CODES[resultCreateComment.status]);
     }
-  }
-}
 
-export const postController = new PostController();
+    const result = await this.commentsQueryRepo.getCommentById(resultCreateComment.data);
+    if (!result) return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
+
+    res.status(HTTP_STATUS_CODES[resultCreateComment.status]).send(result);
+  };
+}

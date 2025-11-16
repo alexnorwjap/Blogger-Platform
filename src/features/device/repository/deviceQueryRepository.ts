@@ -2,7 +2,9 @@ import { ObjectId } from 'mongodb';
 import { deviceCollection } from '../../../db/mongo.db';
 import { DeviceModel, DeviceViewModel } from '../model/deviceModel';
 import { deviceMapper } from './deviceMapper';
+import { injectable } from 'inversify';
 
+@injectable()
 export class DeviceQueryRepository {
   async getDeviceById(deviceId: string): Promise<DeviceModel | null> {
     const device = await deviceCollection.findOne({ _id: new ObjectId(deviceId) });
@@ -13,5 +15,3 @@ export class DeviceQueryRepository {
     return devices.map(deviceMapper.toViewModel);
   }
 }
-
-export const deviceQueryRepository = new DeviceQueryRepository();

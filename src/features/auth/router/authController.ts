@@ -1,15 +1,21 @@
 import { HTTP_STATUS_CODES } from '../../../shared/constants/http-status';
-import { authService } from '../service/authService';
+import { AuthService } from '../service/authService';
 import { Response } from 'express';
 import { UserRequest, RequestBody, RefreshTokenRequest } from '../../../shared/types/api.types';
-import { authQueryRepository } from '../database/authQueryRepoImpl';
 import { InputRegistrationDto } from '../repository/dto/authDto';
 import { AuthDto } from '../repository/dto/authDto';
-import { deviceQueryRepository } from '../../device/repository/deviceQueryRepository';
-
-class AuthController {
-  async login(req: RequestBody<AuthDto>, res: Response) {
-    const loginResult = await authService.login(req.body, {
+import { DeviceQueryRepository } from '../../device/repository/deviceQueryRepository';
+import { AuthQueryRepoImpl } from '../database/authQueryRepoImpl';
+import { inject, injectable } from 'inversify';
+@injectable()
+export class AuthController {
+  constructor(
+    @inject(AuthService) readonly authService: AuthService,
+    @inject(AuthQueryRepoImpl) readonly authQueryRepository: AuthQueryRepoImpl,
+    @inject(DeviceQueryRepository) readonly deviceQueryRepository: DeviceQueryRepository
+  ) {}
+  login = async (req: RequestBody<AuthDto>, res: Response) => {
+    const loginResult = await this.authService.login(req.body, {
       ip: req.ip || 'Unknown ip',
       title: req.headers['user-agent'] || 'Unknown agent',
     });
@@ -24,55 +30,55 @@ class AuthController {
     res
       .status(HTTP_STATUS_CODES[loginResult.status])
       .send({ accessToken: loginResult.data.accessToken });
-  }
+  };
 
-  async profile(req: UserRequest, res: Response) {
+  profile = async (req: UserRequest, res: Response) => {
     if (!req.user) return res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
-    const user = await authQueryRepository.getProfile(req.user);
+    const user = await this.authQueryRepository.getProfile(req.user);
     res.status(HTTP_STATUS_CODES.SUCCESS).send(user);
-  }
+  };
 
-  async registration(req: RequestBody<InputRegistrationDto>, res: Response) {
-    const result = await authService.registration(req.body);
+  registration = async (req: RequestBody<InputRegistrationDto>, res: Response) => {
+    const result = await this.authService.registration(req.body);
     if (!result.data && result.errorMessage)
       return res.status(HTTP_STATUS_CODES[result.status]).send({
         [result.errorMessage]: result.extensions,
       });
     res.sendStatus(HTTP_STATUS_CODES[result.status]);
-  }
+  };
 
-  async registrationConfirmation(req: RequestBody<{ code: string }>, res: Response) {
-    const user = await authQueryRepository.findByConfirmationCode(req.body.code);
+  registrationConfirmation = async (req: RequestBody<{ code: string }>, res: Response) => {
+    const user = await this.authQueryRepository.findByConfirmationCode(req.body.code);
 
-    const result = await authService.registrationConfirmation(user);
+    const result = await this.authService.registrationConfirmation(user);
     if (!result.data && result.errorMessage)
       return res.status(HTTP_STATUS_CODES[result.status]).send({
         [result.errorMessage]: result.extensions,
       });
     res.sendStatus(HTTP_STATUS_CODES[result.status]);
-  }
+  };
   //  стоит ли вынести в сервис проверку на существование пользователя и вывод ошибки?
-  async registrationEmailResending(req: RequestBody<{ email: string }>, res: Response) {
-    const user = await authQueryRepository.findByEmail(req.body.email);
+  registrationEmailResending = async (req: RequestBody<{ email: string }>, res: Response) => {
+    const user = await this.authQueryRepository.findByEmail(req.body.email);
     if (!user) return res.sendStatus(HTTP_STATUS_CODES.BAD_REQUEST);
 
-    const newConfirmationCode = await authService.registrationEmailResending(user);
+    const newConfirmationCode = await this.authService.registrationEmailResending(user);
     if (newConfirmationCode.errorMessage) {
       return res.status(HTTP_STATUS_CODES[newConfirmationCode.status]).send({
         [newConfirmationCode.errorMessage]: newConfirmationCode.extensions,
       });
     }
     res.sendStatus(HTTP_STATUS_CODES[newConfirmationCode.status]);
-  }
+  };
 
-  async refreshToken(req: RefreshTokenRequest, res: Response) {
-    const device = await deviceQueryRepository.getDeviceById(req.deviceId!);
+  refreshToken = async (req: RefreshTokenRequest, res: Response) => {
+    const device = await this.deviceQueryRepository.getDeviceById(req.deviceId!);
     if (!device) {
       res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
       return;
     }
 
-    const newTokens = await authService.refreshToken(device, req.deviceId!);
+    const newTokens = await this.authService.refreshToken(device, req.deviceId!);
     if (!newTokens.data) return res.sendStatus(HTTP_STATUS_CODES[newTokens.status]);
 
     const { accessToken, refreshToken } = newTokens.data;
@@ -82,34 +88,40 @@ class AuthController {
       maxAge: 60000,
     });
     res.status(HTTP_STATUS_CODES[newTokens.status]).send({ accessToken: accessToken });
-  }
+  };
 
-  async logout(req: RefreshTokenRequest, res: Response) {
-    const resultLogout = await authService.logout(req.deviceId!);
+  logout = async (req: RefreshTokenRequest, res: Response) => {
+    const resultLogout = await this.authService.logout(req.deviceId!);
     if (!resultLogout.data) {
       return res.sendStatus(HTTP_STATUS_CODES[resultLogout.status]);
     }
     return res.sendStatus(HTTP_STATUS_CODES[resultLogout.status]);
-  }
+  };
 
-  async passwordRecoveryCode(req: RequestBody<{ email: string }>, res: Response) {
-    const user = await authQueryRepository.findByEmail(req.body.email);
+  passwordRecoveryCode = async (req: RequestBody<{ email: string }>, res: Response) => {
+    const user = await this.authQueryRepository.findByEmail(req.body.email);
     if (!user) return res.sendStatus(HTTP_STATUS_CODES.NO_CONTENT);
-    const result = await authService.passwordRecoveryCode(user);
+    const result = await this.authService.passwordRecoveryCode(user);
     if (!result.data) return res.sendStatus(HTTP_STATUS_CODES[result.status]);
     res.sendStatus(HTTP_STATUS_CODES[result.status]);
-  }
+  };
 
-  async passwordRecovery(
+  passwordRecovery = async (
     req: RequestBody<{ recoveryCode: string; newPassword: string }>,
     res: Response
-  ) {
-    const user = await authQueryRepository.findByRecoveryCode(req.body.recoveryCode);
-    if (!user) return res.sendStatus(HTTP_STATUS_CODES.BAD_REQUEST);
-    const result = await authService.passwordRecovery(user, req.body.newPassword);
+  ) => {
+    const user = await this.authQueryRepository.findByRecoveryCode(req.body.recoveryCode);
+    if (!user)
+      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({
+        errorsMessages: [
+          {
+            field: 'recoveryCode',
+            message: 'Invalid recovery code',
+          },
+        ],
+      });
+    const result = await this.authService.passwordRecovery(user, req.body.newPassword);
     if (!result.data) return res.sendStatus(HTTP_STATUS_CODES[result.status]);
     res.sendStatus(HTTP_STATUS_CODES[result.status]);
-  }
+  };
 }
-
-export const authController = new AuthController();

@@ -3,23 +3,32 @@ import { authorization } from '../../../../shared/middlewares/authorization';
 import { usersValidation } from '../routes/validation/postValidation';
 import { inputValidationResult } from '../../../../shared/middlewares/result-validation';
 import { idValidation } from '../../../../shared/middlewares/id-validation';
-import { userController } from './userController';
 import { resultIdValidation } from '../../../../shared/middlewares/resultIdValidation';
+import container from '../../../../ioc';
+import { UsersController } from './userController';
+
+const usersController = container.get<UsersController>(UsersController);
 
 export const usersRoutes = () => {
   const router = express.Router();
 
-  router.get('/', authorization, userController.getUsersList);
+  router.get('/', authorization, usersController.getUsersList);
 
   router.post(
     '/',
     authorization,
     usersValidation,
     inputValidationResult,
-    userController.createUser
+    usersController.createUser
   );
 
-  router.delete('/:id', authorization, idValidation, resultIdValidation, userController.deleteUser);
+  router.delete(
+    '/:id',
+    authorization,
+    idValidation,
+    resultIdValidation,
+    usersController.deleteUser
+  );
 
   return router;
 };

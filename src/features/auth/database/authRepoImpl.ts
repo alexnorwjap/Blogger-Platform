@@ -11,25 +11,25 @@ import {
   recoveryCodeDto,
   passwordRecoveryDto,
 } from '../repository/dto/authDto';
+import { injectable } from 'inversify';
 
+@injectable()
 export class AuthRepoImpl implements AuthRepository {
   async findByLoginOrEmail(dto: AuthDto | InputRegistrationDto): Promise<authModel | null> {
     if ('loginOrEmail' in dto) {
       const user = await userCollection.findOne({
         $or: [{ login: dto.loginOrEmail }, { email: dto.loginOrEmail }],
       });
-      if (!user) {
-        return null;
-      }
+      if (!user) return null;
+
       return AuthMapper.toService(user);
     }
     if ('login' in dto && 'email' in dto) {
       const user = await userCollection.findOne({
         $or: [{ login: dto.login }, { email: dto.email }],
       });
-      if (!user) {
-        return null;
-      }
+      if (!user) return null;
+
       return AuthMapper.toService(user);
     }
     return null;
@@ -49,7 +49,6 @@ export class AuthRepoImpl implements AuthRepository {
     const result = await userCollection.deleteOne({ _id: new ObjectId(userId) });
     return result.deletedCount > 0;
   }
-
   async addRecoveryCode(userId: string, dto: recoveryCodeDto): Promise<boolean> {
     const result = await userCollection.updateOne(
       { _id: new ObjectId(userId) },

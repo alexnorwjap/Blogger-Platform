@@ -3,10 +3,13 @@ import { authorization } from '../../../shared/middlewares/authorization';
 import { postInputDtoValidation } from './postValidation';
 import { inputValidationResult } from '../../../shared/middlewares/result-validation';
 import { idValidation } from '../../../shared/middlewares/id-validation';
-import { postController } from './postController';
+import { PostController } from './postController';
 import { authorizationBearer } from '../../../shared/middlewares/authorizationBearer';
 import { contentCommentValidation } from './postValidation';
 import { resultIdValidation } from '../../../shared/middlewares/resultIdValidation';
+import container from '../../../ioc';
+
+const postController = container.get<PostController>(PostController);
 
 export const getPostsRoutes = () => {
   const router = express.Router();

@@ -1,4 +1,3 @@
-import { PostModel } from '../models/Post';
 import { CreatePostDto, UpdatePostDto } from './dto/postRepoDto';
 
 export interface PostRepository {

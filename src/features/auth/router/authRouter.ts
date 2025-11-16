@@ -1,5 +1,5 @@
 import express from 'express';
-import { authController } from './authController';
+import { AuthController } from './authController';
 import { authValidation } from './validation/loginValidation';
 import { inputValidationResult } from '../../../shared/middlewares/result-validation';
 import { authorizationBearer } from '../../../shared/middlewares/authorizationBearer';
@@ -7,7 +7,10 @@ import { emailValidation, registrationValidation } from './validation/registrati
 import { codeValidation } from './validation/codeValidation';
 import { requestLogValidation } from '../../../shared/middlewares/requestLogValidation';
 import { refreshTokenGuard } from '../../../shared/middlewares/refreshTokenGuard';
-import { passwordValidation } from '../../../shared/middlewares/passwordValidation';
+import { newPasswordValidation } from './validation/newPasswordValidation';
+import container from '../../../ioc';
+
+const authController = container.get<AuthController>(AuthController);
 
 export const authRoutes = () => {
   const router = express.Router();
@@ -57,7 +60,7 @@ export const authRoutes = () => {
   router.post(
     '/new-password',
     requestLogValidation,
-    passwordValidation,
+    newPasswordValidation,
     inputValidationResult,
     authController.passwordRecovery
   );

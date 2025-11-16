@@ -4,12 +4,15 @@ import { commentCollection } from '../../../db/mongo.db';
 import { ObjectId } from 'mongodb';
 import { CommentQueryMapper } from './queryMapper';
 import { queryParamsDto } from '../repository/repositoryDto';
+import { injectable } from 'inversify';
 
-class CommentsQueryRepoImpl implements CommentsQueryRepository {
+@injectable()
+export class CommentsQueryRepoImpl implements CommentsQueryRepository {
   async getCommentById(id: string): Promise<CommentViewModel | null> {
     const result = await commentCollection.findOne({ _id: new ObjectId(id) });
     return result ? CommentQueryMapper.toDomain(result) : null;
   }
+
   async getCommentByUserIdAndCommentId(commentId: string, userId: string): Promise<Boolean> {
     const result = await commentCollection.findOne({
       _id: new ObjectId(commentId),
@@ -38,5 +41,3 @@ class CommentsQueryRepoImpl implements CommentsQueryRepository {
     );
   }
 }
-
-export const commentsQueryRepoImpl = new CommentsQueryRepoImpl();

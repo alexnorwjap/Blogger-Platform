@@ -1,36 +1,34 @@
-import { WrapValidErrorsType } from '../../../shared/types/errors-type';
 import { UsersRepoImpl } from '../infrastructure/db/repositories/UsersRepoImpl';
-import { UserViewModel } from '../models/User';
 import { CreateUserDto } from './userServiceDto';
-import { UsersRepository } from '../repositories/usersRepository';
-import bcrypt from 'bcryptjs';
 import { Result } from '../../../shared/utils/result-object';
 import { createResult } from '../../../shared/utils/result-object';
+import { inject, injectable } from 'inversify';
+import { BcryptService } from '../../auth/adapter/bcryptService';
 
-class UserService {
-  constructor(readonly usersRepository: UsersRepository) {}
+@injectable()
+export class UsersService {
+  constructor(
+    @inject(UsersRepoImpl) readonly usersRepository: UsersRepoImpl,
+    @inject(BcryptService) readonly bcryptService: BcryptService
+  ) {}
 
   async createUser(dto: CreateUserDto): Promise<Result<string | null>> {
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
+    const hashedPassword = await this.bcryptService.hashPassword(dto.password);
 
     const resultCreate = await this.usersRepository.create({
       ...dto,
       password: hashedPassword,
       createdAt: new Date(),
     });
-    if (!resultCreate) {
-      return createResult('BAD_REQUEST', null, 'User not created');
-    }
+    if (!resultCreate) return createResult('BAD_REQUEST', null);
+
     return createResult('CREATED', resultCreate);
   }
 
   async deleteUser(id: string): Promise<Result<boolean>> {
     const resultDelete = await this.usersRepository.delete(id);
-    if (!resultDelete) {
-      return createResult('NOT_FOUND', resultDelete, 'User not found');
-    }
+    if (!resultDelete) return createResult('NOT_FOUND', resultDelete);
+
     return createResult('NO_CONTENT', resultDelete);
   }
 }
-
-export const userService = new UserService(new UsersRepoImpl());

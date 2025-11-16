@@ -1,10 +1,10 @@
-import { BlogModel } from '../models/Blog';
 import { BlogRepository } from '../repositories/blogRepository';
-import { BlogMapper } from './blogMapper';
 import { blogCollection } from '../../../db/mongo.db';
 import { ObjectId } from 'mongodb';
 import { BlogCreateDto, BlogUpdateDto } from '../repositories/dto/blogDto';
+import { injectable } from 'inversify';
 
+@injectable()
 export class BlogRepositoryImpl implements BlogRepository {
   async create(dto: BlogCreateDto): Promise<string | null> {
     const result = await blogCollection.insertOne(dto);

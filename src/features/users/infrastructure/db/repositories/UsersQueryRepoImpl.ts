@@ -5,8 +5,10 @@ import { UserQueryMapper } from '../mappers/UserQueryMapper';
 import { userCollection } from '../../../../../db/mongo.db';
 import { ObjectId } from 'mongodb';
 import { UserViewModel } from '../../../models/User';
+import { injectable } from 'inversify';
 
-class UsersQueryRepoImpl implements UsersQueryRepository {
+@injectable()
+export class UsersQueryRepoImpl implements UsersQueryRepository {
   async getAll(query: queryParamsDto): Promise<UsersViewModel> {
     const queryResult = UserQueryMapper.toCheckDefault(query);
     const queryParams = UserQueryMapper.toFilterSortPagination(queryResult);
@@ -34,5 +36,3 @@ class UsersQueryRepoImpl implements UsersQueryRepository {
     return result ? UserQueryMapper.toDomain(result) : null;
   }
 }
-
-export const usersQueryRepository = new UsersQueryRepoImpl();

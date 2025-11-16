@@ -1,4 +1,3 @@
-import { BlogModel } from '../models/Blog';
 import { BlogCreateDto, BlogUpdateDto } from './dto/blogDto';
 
 export interface BlogRepository {

@@ -1,66 +1,58 @@
 import { Response } from 'express';
 import { HTTP_STATUS_CODES } from '../../../shared/constants/http-status';
-import { RefreshTokenRequest, RequestParams, UserRequest } from '../../../shared/types/api.types';
-import { deviceQueryRepository } from '../repository/deviceQueryRepository';
-import { deviceService } from '../service/deviceService';
+import { RefreshTokenRequest, RequestParams } from '../../../shared/types/api.types';
+import { DeviceQueryRepository } from '../repository/deviceQueryRepository';
+import { DeviceService } from '../service/deviceService';
+import { inject, injectable } from 'inversify';
 
-export const deviceController = {
-  getDevices: async (req: RefreshTokenRequest, res: Response) => {
-    console.log('getDevices', req.deviceId);
-    const device = await deviceQueryRepository.getDeviceById(req.deviceId!);
-    if (!device) {
-      res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
-      return;
-    }
+@injectable()
+export class DeviceController {
+  constructor(
+    @inject(DeviceQueryRepository) readonly deviceQueryRepository: DeviceQueryRepository,
+    @inject(DeviceService) readonly deviceService: DeviceService
+  ) {}
 
-    const devices = await deviceQueryRepository.getDevicesByUserId(device.userId);
-    console.log('devices', devices);
+  getDevices = async (req: RefreshTokenRequest, res: Response) => {
+    const device = await this.deviceQueryRepository.getDeviceById(req.deviceId!);
+    if (!device) return res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
+
+    const devices = await this.deviceQueryRepository.getDevicesByUserId(device.userId);
     res.status(HTTP_STATUS_CODES.SUCCESS).send(devices);
-  },
-  //  актуально ли ! - использовать
-  deletedAllOtherDevices: async (req: RefreshTokenRequest, res: Response) => {
-    const device = await deviceQueryRepository.getDeviceById(req.deviceId!);
-    if (!device) {
-      res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
-      return;
-    }
-    const result = await deviceService.deleteAllOtherDevicesByUserId(device.userId, req.deviceId!);
-    if (!result.data) {
-      res.sendStatus(HTTP_STATUS_CODES[result.status]);
-      return;
-    }
-    res.sendStatus(HTTP_STATUS_CODES[result.status]);
-  },
+  };
 
-  //   refreshTokenGuard - имеет свой тип реквеста , нормально ли это ?
-  deleteDevice: async (
+  deletedAllOtherDevices = async (req: RefreshTokenRequest, res: Response) => {
+    const device = await this.deviceQueryRepository.getDeviceById(req.deviceId!);
+    if (!device) return res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
+
+    const result = await this.deviceService.deleteAllOtherDevicesByUserId(
+      device.userId,
+      req.deviceId!
+    );
+    if (!result.data) return res.sendStatus(HTTP_STATUS_CODES[result.status]);
+
+    res.sendStatus(HTTP_STATUS_CODES[result.status]);
+  };
+
+  deleteDevice = async (
     req: RefreshTokenRequest & RequestParams<{ deviceId: string }>,
     res: Response
   ) => {
     const [deviceFromToken, deviceFromParams] = await Promise.all([
-      deviceQueryRepository.getDeviceById(req.deviceId!),
-      deviceQueryRepository.getDeviceById(req.params.deviceId),
+      this.deviceQueryRepository.getDeviceById(req.deviceId!),
+      this.deviceQueryRepository.getDeviceById(req.params.deviceId),
     ]);
 
-    if (!deviceFromToken) {
-      res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
-      return;
-    }
+    if (!deviceFromToken) return res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
 
-    if (!deviceFromParams) {
-      res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
-      return;
-    }
+    if (!deviceFromParams) return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
 
     if (deviceFromToken.userId !== deviceFromParams.userId) {
-      res.sendStatus(HTTP_STATUS_CODES.FORBIDDEN);
-      return;
+      return res.sendStatus(HTTP_STATUS_CODES.FORBIDDEN);
     }
-    const result = await deviceService.deleteDevice(req.params.deviceId);
-    if (!result.data) {
-      res.sendStatus(HTTP_STATUS_CODES[result.status]);
-      return;
-    }
+
+    const result = await this.deviceService.deleteDevice(req.params.deviceId);
+    if (!result.data) return res.sendStatus(HTTP_STATUS_CODES[result.status]);
+
     res.sendStatus(HTTP_STATUS_CODES[result.status]);
-  },
-};
+  };
+}

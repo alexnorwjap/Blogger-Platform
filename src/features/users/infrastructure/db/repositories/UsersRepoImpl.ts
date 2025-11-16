@@ -1,10 +1,10 @@
 import { UsersRepository } from '../../../repositories/usersRepository';
 import { InputUserDto } from '../../../repositories/dto/commandsUserDto';
-import { UserViewModel } from '../../../models/User';
 import { userCollection } from '../../../../../db/mongo.db';
 import { ObjectId } from 'mongodb';
-import { Result } from '../../../../../shared/utils/result-object';
+import { injectable } from 'inversify';
 
+@injectable()
 export class UsersRepoImpl implements UsersRepository {
   async create(dto: InputUserDto): Promise<string | null> {
     const result = await userCollection.insertOne({

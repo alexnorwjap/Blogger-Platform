@@ -6,8 +6,10 @@ import { ObjectId } from 'mongodb';
 import { AuthQueryMapper } from './authQueryMapper';
 import { authModel } from '../model/authModel';
 import { AuthMapper } from './authMapper';
+import { injectable } from 'inversify';
 
-class AuthQueryRepoImpl implements AuthQueryRepository {
+@injectable()
+export class AuthQueryRepoImpl implements AuthQueryRepository {
   async getProfile(userId: string): Promise<AuthViewModel | null> {
     const user = await userCollection.findOne({ _id: new ObjectId(userId) });
     if (!user) {
@@ -52,5 +54,3 @@ class AuthQueryRepoImpl implements AuthQueryRepository {
     return AuthMapper.toService(user);
   }
 }
-
-export const authQueryRepository = new AuthQueryRepoImpl();

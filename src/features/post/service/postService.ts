@@ -1,56 +1,59 @@
-import { PostRepository } from '../repositories/postRepository';
-import { PostModel } from '../models/Post';
 import { PostRepositoryImpl } from '../database/repositories/PostRepositoryImpl';
 import { InputPostDtoByBlogId, InputPostDto } from './serviceDto';
-import { createPost, createPostByBlogId } from './builders';
 import { UpdatePostDto } from '../repositories/dto/postRepoDto';
 import { createResult } from '../../../shared/utils/result-object';
 import { Result } from '../../../shared/utils/result-object';
+import { inject, injectable } from 'inversify';
 
-class PostService {
-  constructor(readonly postRepository: PostRepository) {}
+@injectable()
+export class PostService {
+  constructor(@inject(PostRepositoryImpl) readonly postRepository: PostRepositoryImpl) {}
 
-  // review complete
   async createPost(dto: InputPostDto, blogName: string): Promise<Result<string | null>> {
-    const post = createPost(dto, blogName);
-    const postId = await this.postRepository.create(post);
-    if (!postId) {
-      return createResult('BAD_REQUEST', null, 'Post not created');
-    }
+    const newPost = {
+      title: dto.title,
+      shortDescription: dto.shortDescription,
+      content: dto.content,
+      blogId: dto.blogId,
+      blogName: blogName,
+      createdAt: new Date(),
+    };
+    const postId = await this.postRepository.create(newPost);
+    if (!postId) return createResult('BAD_REQUEST', postId);
+
     return createResult('CREATED', postId);
   }
 
-  // review complete
   async createPostByBlogId(
     dto: InputPostDtoByBlogId,
     blogName: string,
     blogId: string
   ): Promise<Result<string | null>> {
-    const post = createPostByBlogId(dto, blogName, blogId);
-    const postId = await this.postRepository.createByBlogId(post);
-    if (!postId) {
-      return createResult('NOT_FOUND', null, 'Post not created');
-    }
+    const newPost = {
+      title: dto.title,
+      shortDescription: dto.shortDescription,
+      content: dto.content,
+      blogId: blogId,
+      blogName: blogName,
+      createdAt: new Date(),
+    };
+    const postId = await this.postRepository.createByBlogId(newPost);
+    if (!postId) return createResult('NOT_FOUND', postId);
+
     return createResult('CREATED', postId);
   }
 
-  // review complete
-  async updatePost(id: string, dto: UpdatePostDto): Promise<Result<boolean | null>> {
+  async updatePost(id: string, dto: UpdatePostDto): Promise<Result<boolean>> {
     const resultUpdate = await this.postRepository.update(id, dto);
-    if (!resultUpdate) {
-      return createResult('NOT_FOUND', null, 'Post not updated');
-    }
+    if (!resultUpdate) return createResult('NOT_FOUND', resultUpdate);
+
     return createResult('NO_CONTENT', resultUpdate);
   }
 
-  // review complete
-  async deletePost(id: string): Promise<Result<boolean | null>> {
+  async deletePost(id: string): Promise<Result<boolean>> {
     const resultDelete = await this.postRepository.delete(id);
-    if (!resultDelete) {
-      return createResult('NOT_FOUND', null, 'Post not deleted');
-    }
+    if (!resultDelete) return createResult('NOT_FOUND', resultDelete);
+
     return createResult('NO_CONTENT', resultDelete);
   }
 }
-
-export const postService = new PostService(new PostRepositoryImpl());

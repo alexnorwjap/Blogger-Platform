@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { setupApp } from './app';
 import express from 'express';
 import { runDB } from './db/mongo.db';

@@ -5,9 +5,11 @@ import { postCollection } from '../../../../db/mongo.db';
 import { PostQueryMapper } from '../mappers/PostQueryMapper';
 import { ObjectId } from 'mongodb';
 import { PostModel } from '../../models/Post';
+import { injectable } from 'inversify';
 
 // review complete
-class PostQueryRepositoryImpl implements PostQueryRepository {
+@injectable()
+export class PostQueryRepositoryImpl implements PostQueryRepository {
   // review complete
   async getAll(query: queryParamsDto): Promise<PostsViewModel> {
     const queryParams = PostQueryMapper.toFilterSortPagination(query);
@@ -22,7 +24,7 @@ class PostQueryRepositoryImpl implements PostQueryRepository {
 
     return PostQueryMapper.toDomainViewModel(query, count, posts.map(PostQueryMapper.toDomain));
   }
-  // review complete
+
   async getPostById(id: string): Promise<PostModel | null> {
     const result = await postCollection.findOne({ _id: new ObjectId(id) });
     return result ? PostQueryMapper.toDomain(result) : null;
@@ -42,5 +44,3 @@ class PostQueryRepositoryImpl implements PostQueryRepository {
     return PostQueryMapper.toDomainViewModel(query, count, posts.map(PostQueryMapper.toDomain));
   }
 }
-
-export const postQueryRepository = new PostQueryRepositoryImpl();
