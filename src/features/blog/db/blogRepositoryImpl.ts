@@ -1,21 +1,19 @@
 import { BlogRepository } from '../repositories/blogRepository';
-import { blogCollection } from '../../../db/mongo.db';
-import { ObjectId } from 'mongodb';
-import { BlogCreateDto, BlogUpdateDto } from '../repositories/dto/blogDto';
 import { injectable } from 'inversify';
-
+import { BlogDocument } from './blogEntitiy';
+import { BlogModelEntity } from './blogEntitiy';
 @injectable()
 export class BlogRepositoryImpl implements BlogRepository {
-  async create(dto: BlogCreateDto): Promise<string | null> {
-    const result = await blogCollection.insertOne(dto);
-    return result.insertedId ? result.insertedId.toString() : null;
-  }
-  async update(id: string, dto: BlogUpdateDto): Promise<boolean> {
-    const result = await blogCollection.updateOne({ _id: new ObjectId(id) }, { $set: { ...dto } });
-    return result.modifiedCount > 0;
+  async save(model: BlogDocument): Promise<string> {
+    await model.save();
+    return model.id;
   }
   async delete(id: string): Promise<boolean> {
-    const result = await blogCollection.deleteOne({ _id: new ObjectId(id) });
+    const result = await BlogModelEntity.deleteOne({ _id: id });
     return result.deletedCount > 0;
+  }
+  async getBlogById(id: string): Promise<BlogDocument | null> {
+    const blog = await BlogModelEntity.findById(id);
+    return blog;
   }
 }

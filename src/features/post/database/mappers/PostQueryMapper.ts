@@ -1,7 +1,7 @@
 import { PostModel } from '../../models/Post';
 import { PostsViewModel } from '../../models/PostsViewModel';
 import { FilterSortPagination } from '../entity/entitiesQuery';
-import { PostEntity } from '../entity/entities';
+import { PostEntity } from '../entity/postEntities';
 import { queryParamsDto } from '../../repositories/dto/queryRepoPostDto';
 import { WithId } from 'mongodb';
 
@@ -18,7 +18,11 @@ export class PostQueryMapper {
     };
   }
 
-  public static toDomainViewModel(query: queryParamsDto, count: number, posts: PostModel[]): PostsViewModel {
+  public static toDomainViewModel(
+    query: queryParamsDto,
+    count: number,
+    posts: PostModel[]
+  ): PostsViewModel {
     return {
       pagesCount: Math.ceil(count / +query.pageSize),
       page: +query.pageNumber,

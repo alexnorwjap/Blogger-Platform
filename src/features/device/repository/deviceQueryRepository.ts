@@ -1,17 +1,16 @@
-import { ObjectId } from 'mongodb';
-import { deviceCollection } from '../../../db/mongo.db';
 import { DeviceModel, DeviceViewModel } from '../model/deviceModel';
 import { deviceMapper } from './deviceMapper';
 import { injectable } from 'inversify';
+import { DeviceModelEntity } from '../database/deviceEntity';
 
 @injectable()
 export class DeviceQueryRepository {
   async getDeviceById(deviceId: string): Promise<DeviceModel | null> {
-    const device = await deviceCollection.findOne({ _id: new ObjectId(deviceId) });
-    return device ? deviceMapper.toModel(device) : null;
+    const device = await DeviceModelEntity.findById(deviceId);
+    return device ? deviceMapper.toModel(device.toObject()) : null;
   }
   async getDevicesByUserId(userId: string): Promise<DeviceViewModel[]> {
-    const devices = await deviceCollection.find({ userId }).toArray();
-    return devices.map(deviceMapper.toViewModel);
+    const devices = await DeviceModelEntity.find({ userId });
+    return devices.map(device => deviceMapper.toViewModel(device.toObject()));
   }
 }

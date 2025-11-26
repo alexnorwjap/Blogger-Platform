@@ -2,6 +2,8 @@ import { DeviceRepository } from '../repository/deviceRepository';
 import { InputCreateDeviceDto } from './typeService';
 import { createResult, Result } from '../../../shared/utils/result-object';
 import { injectable, inject } from 'inversify';
+import { DeviceDocument } from '../database/deviceEntity';
+import { DeviceModelEntity } from '../database/deviceEntity';
 
 @injectable()
 export class DeviceService {
@@ -10,20 +12,23 @@ export class DeviceService {
   async createDevice(
     dto: InputCreateDeviceDto
   ): Promise<{ deviceId: string; lastActiveDate: Date }> {
-    const newDate = new Date();
-    const device = {
+    const device = new DeviceModelEntity({
       ip: dto.ip,
       title: dto.title,
-      lastActiveDate: newDate,
       userId: dto.userId,
-    };
-    const result = await this.deviceRepository.create(device);
-    return { deviceId: result, lastActiveDate: newDate };
+    });
+    await this.deviceRepository.save(device);
+
+    return { deviceId: device.id, lastActiveDate: device.lastActiveDate };
   }
 
-  async updateDevice(deviceId: string, lastActiveDate: Date): Promise<boolean> {
-    const result = await this.deviceRepository.update(deviceId, lastActiveDate);
-    return result;
+  async updateDevice(deviceId: string): Promise<DeviceDocument | null> {
+    const device = await this.deviceRepository.findById(deviceId);
+    if (!device) return null;
+
+    device.lastActiveDate = new Date();
+    const newDevice = await this.deviceRepository.save(device);
+    return newDevice;
   }
 
   async deleteDevice(deviceId: string): Promise<Result<boolean>> {
@@ -31,8 +36,11 @@ export class DeviceService {
     return result ? createResult('NO_CONTENT', result) : createResult('NOT_FOUND', result);
   }
 
-  async deleteAllOtherDevicesByUserId(userId: string, deviceId: string): Promise<Result<boolean>> {
-    const result = await this.deviceRepository.deleteAllOther(userId, deviceId);
+  async deleteAllOtherDevicesByUserId(deviceId: string): Promise<Result<boolean>> {
+    const device = await this.deviceRepository.findById(deviceId);
+    if (!device) return createResult('UNAUTHORIZED', false);
+
+    const result = await this.deviceRepository.deleteAllOther(device.userId, device.id);
     return result ? createResult('NO_CONTENT', result) : createResult('NOT_FOUND', result);
   }
 }

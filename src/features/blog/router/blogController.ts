@@ -32,14 +32,14 @@ export class BlogController {
   ) {}
 
   getBlog = async (req: RequestParams<BlogId>, res: Response<BlogModel>) => {
-    const result = await this.blogQueryRepository.getBlogById(req.params.id);
-    if (!result) return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
-    res.status(HTTP_STATUS_CODES.SUCCESS).send(result);
+    const blog = await this.blogQueryRepository.getBlogById(req.params.id);
+    if (!blog) return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
+
+    res.status(HTTP_STATUS_CODES.SUCCESS).send(blog);
   };
 
   getBlogsList = async (req: RequestQuery<QueryParamsInput>, res: Response<BlogsViewModel>) => {
     const blogs = await this.blogQueryRepository.getAll(queryBlogsNormalize(req.query));
-
     if (blogs.items.length === 0) {
       return res.status(HTTP_STATUS_CODES.SUCCESS).send({
         pagesCount: 0,
@@ -80,9 +80,9 @@ export class BlogController {
     const currentBlog = await this.blogQueryRepository.getBlogById(req.params.id);
     if (!currentBlog) return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
 
-    const posts = await this.postQueryRepository.getAllPostsByBlogId(
-      req.params.id,
-      queryPostNormalize(req.query)
+    const posts = await this.postQueryRepository.getAll(
+      queryPostNormalize(req.query),
+      req.params.id
     );
     if (posts.items.length === 0) {
       return res.status(HTTP_STATUS_CODES.SUCCESS).send({
@@ -101,19 +101,21 @@ export class BlogController {
     req: RequestParamsAndBody<BlogId, InputPostDtoByBlogId>,
     res: Response<PostModel | WrapValidErrorsType>
   ) => {
-    const currentBlog = await this.blogQueryRepository.getBlogById(req.params.id);
-    if (!currentBlog) return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
+    const blog = await this.blogQueryRepository.getBlogById(req.params.id);
+    if (!blog) return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
 
-    const resultCreatePost = await this.postService.createPostByBlogId(
-      req.body,
-      currentBlog.name,
-      req.params.id
+    const createPostResult = await this.blogService.createPostForBlog(
+      {
+        ...req.body,
+        blogId: req.params.id,
+      },
+      blog.name
     );
-    if (!resultCreatePost.data) return res.sendStatus(HTTP_STATUS_CODES[resultCreatePost.status]);
+    if (!createPostResult.data) return res.sendStatus(HTTP_STATUS_CODES[createPostResult.status]);
 
-    const post = await this.postQueryRepository.getPostById(resultCreatePost.data);
+    const post = await this.postQueryRepository.getPostById(createPostResult.data);
     if (!post) return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
 
-    res.status(HTTP_STATUS_CODES[resultCreatePost.status]).send(post);
+    res.status(HTTP_STATUS_CODES[createPostResult.status]).send(post);
   };
 }

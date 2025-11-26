@@ -29,6 +29,9 @@ import { UsersController } from './features/users/infrastructure/routes/userCont
 import { RequestLogRepositoryImpl } from './features/request-log/database/repository/RequestLogRepositoryImpl';
 import { QueryRequestLogRepositoryImpl } from './features/request-log/database/repository/QueryRequestLogRepositoryImpl';
 import { RequestLogService } from './features/request-log/service/RequestLogService';
+import { LikeRepoImpl } from './features/like/dataabase/likeRepoImpl';
+import { LikeService } from './features/like/likeService';
+import { CommentsQueryService } from './features/comments/service/commentsQueryService';
 
 const container: Container = new Container();
 
@@ -64,6 +67,7 @@ container.bind(PostController).toSelf();
 // Comments Features
 container.bind(CommentsRepositoryImpl).toSelf();
 container.bind(CommentsQueryRepoImpl).toSelf();
+container.bind(CommentsQueryService).toSelf();
 container.bind(CommentsService).toSelf();
 container.bind(CommentsController).toSelf();
 
@@ -77,5 +81,9 @@ container.bind(UsersController).toSelf();
 container.bind(RequestLogRepositoryImpl).toSelf();
 container.bind(QueryRequestLogRepositoryImpl).toSelf();
 container.bind(RequestLogService).toSelf();
+
+// Like Features
+container.bind(LikeRepoImpl).toSelf();
+container.bind(LikeService).toSelf();
 
 export default container;

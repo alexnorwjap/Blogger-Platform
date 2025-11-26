@@ -12,7 +12,6 @@ const requestLogService = container.get<RequestLogService>(RequestLogService);
 export const requestLogValidation = async (req: Request, res: Response, next: NextFunction) => {
   const { ip, originalUrl: url } = req;
   if (!ip || !url) {
-    console.log('send info to some service: ip or url is not found');
     return next();
   }
 

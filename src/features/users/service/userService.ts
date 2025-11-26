@@ -4,6 +4,7 @@ import { Result } from '../../../shared/utils/result-object';
 import { createResult } from '../../../shared/utils/result-object';
 import { inject, injectable } from 'inversify';
 import { BcryptService } from '../../auth/adapter/bcryptService';
+import { AuthDocument, entityDB } from '../../auth/database/authEntity';
 
 @injectable()
 export class UsersService {
@@ -30,5 +31,9 @@ export class UsersService {
     if (!resultDelete) return createResult('NOT_FOUND', resultDelete);
 
     return createResult('NO_CONTENT', resultDelete);
+  }
+
+  async getUserIdById(id: string): Promise<AuthDocument | null> {
+    return await this.usersRepository.getUserById(id);
   }
 }

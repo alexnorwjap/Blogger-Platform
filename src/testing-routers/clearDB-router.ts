@@ -1,16 +1,19 @@
 import express, { Request, Response } from 'express';
 import { HTTP_STATUS_CODES } from '../shared/constants/http-status';
 
-import { blogCollection, requestLogCollection, userCollection } from '../db/mongo.db';
-import { postCollection } from '../db/mongo.db';
+import { requestLogModel, userModel } from '../db/mongo.db';
+import { BlogModelEntity } from '../features/blog/db/blogEntitiy';
+import { PostModelEntity } from '../features/post/database/entity/postEntities';
+import { DeviceModelEntity } from '../features/device/database/deviceEntity';
 
 export const getClearDbRouter = () => {
   const router = express.Router();
   router.delete('/', async (_req: Request, res: Response) => {
-    await blogCollection.deleteMany({});
-    await userCollection.deleteMany({});
-    await postCollection.deleteMany({});
-    await requestLogCollection.deleteMany({});
+    await BlogModelEntity.deleteMany({});
+    await userModel.deleteMany({});
+    await PostModelEntity.deleteMany({});
+    await DeviceModelEntity.deleteMany({});
+    await requestLogModel.deleteMany({});
     res.sendStatus(HTTP_STATUS_CODES.NO_CONTENT);
   });
   return router;

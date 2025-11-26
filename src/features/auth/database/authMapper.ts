@@ -1,5 +1,5 @@
 import { authModel } from '../model/authModel';
-import { entityDB } from './entity';
+import { entityDB } from './authEntity';
 
 export class AuthMapper {
   public static toService(entity: entityDB): authModel {

@@ -1,16 +1,24 @@
 import { WithId } from 'mongodb';
-import { CommentEntity } from './entity';
-import { CommentModel, CommentViewModel, CommentsViewModel } from '../model/commentModel';
+import { CommentEntity } from './commentsEntity';
+import { CommentViewModel, CommentsViewModel } from '../model/commentModel';
 import { queryParamsDto } from '../repository/repositoryDto';
-import { FilterSortPagination } from './entity';
+import { FilterSortPagination } from './commentsEntity';
 
 export class CommentQueryMapper {
-  public static toDomain(entity: WithId<CommentEntity>): CommentViewModel {
+  public static toDomain(
+    entity: WithId<CommentEntity>,
+    status: string | null = null
+  ): CommentViewModel {
     return {
       id: entity._id.toString(),
       content: entity.content,
       commentatorInfo: entity.commentatorInfo,
       createdAt: entity.createdAt,
+      likesInfo: {
+        likesCount: entity.likesInfo?.likesCount || 0,
+        dislikesCount: entity.likesInfo?.dislikesCount || 0,
+        myStatus: status ? status : 'None',
+      },
     };
   }
 

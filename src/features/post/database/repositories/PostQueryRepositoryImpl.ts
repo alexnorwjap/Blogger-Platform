@@ -1,46 +1,29 @@
 import { PostQueryRepository } from '../../repositories/postQueryRepository';
 import { queryParamsDto } from '../../repositories/dto/queryRepoPostDto';
 import { PostsViewModel } from '../../models/PostsViewModel';
-import { postCollection } from '../../../../db/mongo.db';
 import { PostQueryMapper } from '../mappers/PostQueryMapper';
-import { ObjectId } from 'mongodb';
 import { PostModel } from '../../models/Post';
 import { injectable } from 'inversify';
+import { PostModelEntity } from '../entity/postEntities';
 
-// review complete
 @injectable()
 export class PostQueryRepositoryImpl implements PostQueryRepository {
-  // review complete
-  async getAll(query: queryParamsDto): Promise<PostsViewModel> {
-    const queryParams = PostQueryMapper.toFilterSortPagination(query);
-    const postsResult = postCollection
-      .find({})
-      .sort(queryParams.sort)
-      .skip(queryParams.skip)
-      .limit(queryParams.limit)
-      .toArray();
-    const countResult = postCollection.countDocuments({});
+  async getAll(query: queryParamsDto, blogId?: string): Promise<PostsViewModel> {
+    const { sort, skip, limit } = PostQueryMapper.toFilterSortPagination(query);
+    const filter = blogId ? { blogId: blogId } : {};
+    const postsResult = PostModelEntity.find(filter).sort(sort).skip(skip).limit(limit);
+    const countResult = PostModelEntity.countDocuments(filter);
     const [posts, count] = await Promise.all([postsResult, countResult]);
 
-    return PostQueryMapper.toDomainViewModel(query, count, posts.map(PostQueryMapper.toDomain));
+    return PostQueryMapper.toDomainViewModel(
+      query,
+      count,
+      posts.map(post => PostQueryMapper.toDomain(post.toObject()))
+    );
   }
 
   async getPostById(id: string): Promise<PostModel | null> {
-    const result = await postCollection.findOne({ _id: new ObjectId(id) });
-    return result ? PostQueryMapper.toDomain(result) : null;
-  }
-  // review complete
-  async getAllPostsByBlogId(blogId: string, query: queryParamsDto): Promise<PostsViewModel> {
-    const queryParams = PostQueryMapper.toFilterSortPagination(query);
-    const postsResult = postCollection
-      .find({ blogId: blogId })
-      .sort(queryParams.sort)
-      .skip(queryParams.skip)
-      .limit(queryParams.limit)
-      .toArray();
-    const countResult = postCollection.countDocuments({ blogId: blogId });
-    const [posts, count] = await Promise.all([postsResult, countResult]);
-
-    return PostQueryMapper.toDomainViewModel(query, count, posts.map(PostQueryMapper.toDomain));
+    const result = await PostModelEntity.findById(id);
+    return result ? PostQueryMapper.toDomain(result.toObject()) : null;
   }
 }

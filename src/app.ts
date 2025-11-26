@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import express, { Express } from 'express';
 import { getClearDbRouter } from './testing-routers/clearDB-router';
 import { getPostsRoutes } from './features/post/router/postRouter';

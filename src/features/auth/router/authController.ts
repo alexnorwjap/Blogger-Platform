@@ -1,7 +1,7 @@
 import { HTTP_STATUS_CODES } from '../../../shared/constants/http-status';
 import { AuthService } from '../service/authService';
 import { Response } from 'express';
-import { UserRequest, RequestBody, RefreshTokenRequest } from '../../../shared/types/api.types';
+import { UserRequest, RequestBody, DeviceRequest } from '../../../shared/types/api.types';
 import { InputRegistrationDto } from '../repository/dto/authDto';
 import { AuthDto } from '../repository/dto/authDto';
 import { DeviceQueryRepository } from '../../device/repository/deviceQueryRepository';
@@ -14,6 +14,7 @@ export class AuthController {
     @inject(AuthQueryRepoImpl) readonly authQueryRepository: AuthQueryRepoImpl,
     @inject(DeviceQueryRepository) readonly deviceQueryRepository: DeviceQueryRepository
   ) {}
+
   login = async (req: RequestBody<AuthDto>, res: Response) => {
     const loginResult = await this.authService.login(req.body, {
       ip: req.ip || 'Unknown ip',
@@ -48,37 +49,33 @@ export class AuthController {
   };
 
   registrationConfirmation = async (req: RequestBody<{ code: string }>, res: Response) => {
-    const user = await this.authQueryRepository.findByConfirmationCode(req.body.code);
+    // const user = await this.authQueryRepository.findByConfirmationCode(req.body.code);
 
-    const result = await this.authService.registrationConfirmation(user);
+    const result = await this.authService.registrationConfirmation(req.body.code);
     if (!result.data && result.errorMessage)
       return res.status(HTTP_STATUS_CODES[result.status]).send({
         [result.errorMessage]: result.extensions,
       });
     res.sendStatus(HTTP_STATUS_CODES[result.status]);
   };
-  //  стоит ли вынести в сервис проверку на существование пользователя и вывод ошибки?
-  registrationEmailResending = async (req: RequestBody<{ email: string }>, res: Response) => {
-    const user = await this.authQueryRepository.findByEmail(req.body.email);
-    if (!user) return res.sendStatus(HTTP_STATUS_CODES.BAD_REQUEST);
 
-    const newConfirmationCode = await this.authService.registrationEmailResending(user);
-    if (newConfirmationCode.errorMessage) {
-      return res.status(HTTP_STATUS_CODES[newConfirmationCode.status]).send({
-        [newConfirmationCode.errorMessage]: newConfirmationCode.extensions,
+  registrationEmailResending = async (req: RequestBody<{ email: string }>, res: Response) => {
+    // const user = await this.authQueryRepository.findByEmail(req.body.email);
+    // if (!user) return res.sendStatus(HTTP_STATUS_CODES.BAD_REQUEST);
+
+    const result = await this.authService.registrationEmailResending(req.body.email);
+    if (!result.data && result.errorMessage)
+      return res.status(HTTP_STATUS_CODES[result.status]).send({
+        [result.errorMessage]: result.extensions,
       });
-    }
-    res.sendStatus(HTTP_STATUS_CODES[newConfirmationCode.status]);
+    res.sendStatus(HTTP_STATUS_CODES[result.status]);
   };
 
-  refreshToken = async (req: RefreshTokenRequest, res: Response) => {
-    const device = await this.deviceQueryRepository.getDeviceById(req.deviceId!);
-    if (!device) {
-      res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
-      return;
-    }
+  refreshToken = async (req: DeviceRequest, res: Response) => {
+    // const device = await this.deviceQueryRepository.getDeviceById(req.deviceId!);
+    // if (!device) return res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
 
-    const newTokens = await this.authService.refreshToken(device, req.deviceId!);
+    const newTokens = await this.authService.refreshToken(req.deviceId!);
     if (!newTokens.data) return res.sendStatus(HTTP_STATUS_CODES[newTokens.status]);
 
     const { accessToken, refreshToken } = newTokens.data;
@@ -90,7 +87,7 @@ export class AuthController {
     res.status(HTTP_STATUS_CODES[newTokens.status]).send({ accessToken: accessToken });
   };
 
-  logout = async (req: RefreshTokenRequest, res: Response) => {
+  logout = async (req: DeviceRequest, res: Response) => {
     const resultLogout = await this.authService.logout(req.deviceId!);
     if (!resultLogout.data) {
       return res.sendStatus(HTTP_STATUS_CODES[resultLogout.status]);
@@ -99,10 +96,9 @@ export class AuthController {
   };
 
   passwordRecoveryCode = async (req: RequestBody<{ email: string }>, res: Response) => {
-    const user = await this.authQueryRepository.findByEmail(req.body.email);
-    if (!user) return res.sendStatus(HTTP_STATUS_CODES.NO_CONTENT);
-    const result = await this.authService.passwordRecoveryCode(user);
-    if (!result.data) return res.sendStatus(HTTP_STATUS_CODES[result.status]);
+    // const user = await this.authQueryRepository.findByEmail(req.body.email);
+    // if (!user) return res.sendStatus(HTTP_STATUS_CODES.NO_CONTENT);
+    const result = await this.authService.passwordRecoveryCode(req.body.email);
     res.sendStatus(HTTP_STATUS_CODES[result.status]);
   };
 
@@ -110,17 +106,17 @@ export class AuthController {
     req: RequestBody<{ recoveryCode: string; newPassword: string }>,
     res: Response
   ) => {
-    const user = await this.authQueryRepository.findByRecoveryCode(req.body.recoveryCode);
-    if (!user)
-      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({
-        errorsMessages: [
-          {
-            field: 'recoveryCode',
-            message: 'Invalid recovery code',
-          },
-        ],
-      });
-    const result = await this.authService.passwordRecovery(user, req.body.newPassword);
+    // const user = await this.authQueryRepository.findByRecoveryCode(req.body.recoveryCode);
+    // if (!user)
+    //   return res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({
+    //     errorsMessages: [
+    //       {
+    //         field: 'recoveryCode',
+    //         message: 'Invalid recovery code',
+    //       },
+    //     ],
+    //   });
+    const result = await this.authService.passwordRecovery(req.body);
     if (!result.data) return res.sendStatus(HTTP_STATUS_CODES[result.status]);
     res.sendStatus(HTTP_STATUS_CODES[result.status]);
   };

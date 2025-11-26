@@ -9,11 +9,11 @@ export class JwtService {
     @inject(DeviceQueryRepository) readonly deviceQueryRepository: DeviceQueryRepository
   ) {}
   generateToken(dto: string): string {
-    return jwt.sign({ dto }, SETTINGS.JWT_SECRET, { expiresIn: '10seconds' });
+    return jwt.sign({ dto }, SETTINGS.JWT_SECRET, { expiresIn: '5m' });
   }
 
   generateRefreshToken(dto: { deviceId: string; lastActiveDate: Date }): string {
-    return jwt.sign({ ...dto }, SETTINGS.JWT_SECRET, { expiresIn: '20seconds' });
+    return jwt.sign({ ...dto }, SETTINGS.JWT_SECRET, { expiresIn: '10m' });
   }
 
   getDeviceDataByToken(token: string): { deviceId: string; lastActiveDate: string } | null {

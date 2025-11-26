@@ -1,6 +1,7 @@
 import {
   AuthRequestParamsAndBody,
   RequestBody,
+  AuthRequestParams,
   RequestParams,
   RequestQuery,
 } from '../../../shared/types/api.types';
@@ -14,10 +15,8 @@ import { BlogQueryRepositoryImpl } from '../../blog/db/blogQueryRepositoryImpl';
 import { PostService } from '../service/postService';
 import { InputPostDto } from '../service/serviceDto';
 import { queryPostNormalize } from './helper/queryPostNormalize';
-import { CommentsQueryRepoImpl } from '../../comments/database/commentsQueryRepoImpl';
-import { CommentsService } from '../../comments/service/commentsService';
-import { UsersQueryRepoImpl } from '../../users/infrastructure/db/repositories/UsersQueryRepoImpl';
 import { inject, injectable } from 'inversify';
+import { CommentsQueryService } from '../../comments/service/commentsQueryService';
 
 @injectable()
 export class PostController {
@@ -25,23 +24,20 @@ export class PostController {
     @inject(PostQueryRepositoryImpl) readonly postQueryRepository: PostQueryRepositoryImpl,
     @inject(BlogQueryRepositoryImpl) readonly blogQueryRepository: BlogQueryRepositoryImpl,
     @inject(PostService) readonly postService: PostService,
-    @inject(CommentsQueryRepoImpl) readonly commentsQueryRepo: CommentsQueryRepoImpl,
-    @inject(CommentsService) readonly commentsService: CommentsService,
-    @inject(UsersQueryRepoImpl) readonly usersQueryRepository: UsersQueryRepoImpl
+    @inject(CommentsQueryService) readonly commentsQueryService: CommentsQueryService
   ) {}
 
   getPostsList = async (req: RequestQuery<queryParamsDto>, res: Response<PostsViewModel>) => {
     const posts = await this.postQueryRepository.getAll(queryPostNormalize(req.query));
 
     if (posts.items.length === 0) {
-      res.status(HTTP_STATUS_CODES.SUCCESS).send({
+      return res.status(HTTP_STATUS_CODES.SUCCESS).send({
         pagesCount: 0,
         page: 0,
         pageSize: 0,
         totalCount: 0,
         items: [],
       });
-      return;
     }
     res.status(HTTP_STATUS_CODES.SUCCESS).send(posts);
   };
@@ -54,13 +50,18 @@ export class PostController {
   };
 
   createPost = async (req: RequestBody<InputPostDto>, res: Response<PostModel>) => {
-    const blogExist = await this.blogQueryRepository.getBlogById(req.body.blogId);
-    if (!blogExist) return res.sendStatus(HTTP_STATUS_CODES.BAD_REQUEST);
+    const blog = await this.blogQueryRepository.getBlogById(req.body.blogId);
+    if (!blog) return res.sendStatus(HTTP_STATUS_CODES.BAD_REQUEST);
 
-    const postIdResult = await this.postService.createPost(req.body, blogExist.name);
-    if (!postIdResult.data) return res.sendStatus(HTTP_STATUS_CODES[postIdResult.status]);
+    const createPostResult = await this.postService.createPost(
+      {
+        ...req.body,
+      },
+      blog.name
+    );
+    if (!createPostResult.data) return res.sendStatus(HTTP_STATUS_CODES[createPostResult.status]);
 
-    const post = await this.postQueryRepository.getPostById(postIdResult.data);
+    const post = await this.postQueryRepository.getPostById(createPostResult.data);
     if (!post) return res.sendStatus(HTTP_STATUS_CODES.BAD_REQUEST);
 
     res.status(HTTP_STATUS_CODES.CREATED).send(post);
@@ -80,49 +81,39 @@ export class PostController {
     res.sendStatus(HTTP_STATUS_CODES[resultDelete.status]);
   };
 
-  getCommentsByPostId = async (req: RequestParams<{ id: string }>, res: Response) => {
-    const post = await this.postQueryRepository.getPostById(req.params.id);
-    if (!post) return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
+  getCommentsByPostId = async (req: AuthRequestParams<{ id: string }>, res: Response) => {
+    const statuses = await this.postService.getStatusesByPostId(req.params.id, req?.user || null);
+    if (!statuses.data) return res.sendStatus(HTTP_STATUS_CODES[statuses.status]);
 
-    const result = await this.commentsQueryRepo.getCommentsByPostId(
-      req.params.id,
-      queryPostNormalize(req.query)
+    const result = await this.commentsQueryService.getCommentsAndStatusesByPostId(
+      statuses.data.postId,
+      queryPostNormalize(req.query!),
+      statuses.data.statusData
     );
-    if (result.items.length === 0) {
-      return res.status(HTTP_STATUS_CODES.SUCCESS).send({
-        pagesCount: 0,
-        page: 0,
-        pageSize: 0,
-        totalCount: 0,
-        items: [],
-      });
-    }
-    res.status(HTTP_STATUS_CODES.SUCCESS).send(result);
+
+    res.status(HTTP_STATUS_CODES[result.status]).send(result.data);
   };
 
   createCommentByPostId = async (
     req: AuthRequestParamsAndBody<{ id: string }, { content: string }>,
     res: Response
   ) => {
-    const post = await this.postQueryRepository.getPostById(req.params.id);
-    if (!post || !req.user) return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
-
-    const currentUser = await this.usersQueryRepository.getUserById(req.user);
-    if (!currentUser) return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
-
-    const resultCreateComment = await this.commentsService.createCommentByPostId(
+    const createCommentResult = await this.postService.createCommentByPostId(
       req.params.id,
       req.body.content,
-      currentUser
+      req.user!
     );
 
-    if (!resultCreateComment.data) {
-      return res.sendStatus(HTTP_STATUS_CODES[resultCreateComment.status]);
+    if (!createCommentResult.data) {
+      return res.sendStatus(HTTP_STATUS_CODES[createCommentResult.status]);
     }
 
-    const result = await this.commentsQueryRepo.getCommentById(resultCreateComment.data);
+    const result = await this.commentsQueryService.getCommentByIdWithStatus(
+      createCommentResult.data,
+      req.user || null
+    );
     if (!result) return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
 
-    res.status(HTTP_STATUS_CODES[resultCreateComment.status]).send(result);
+    res.status(HTTP_STATUS_CODES[createCommentResult.status]).send(result);
   };
 }

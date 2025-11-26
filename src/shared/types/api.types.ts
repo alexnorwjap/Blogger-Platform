@@ -8,7 +8,7 @@ type RequestParamsAndQuery<T, Q> = Request<T, unknown, unknown, Q>;
 type CustomRequest = Request<unknown, unknown, unknown, unknown>;
 type UserRequest = CustomRequest & { user?: string };
 type DeviceRequest = CustomRequest & { deviceId?: string };
-type RefreshTokenRequest = CustomRequest & { deviceId?: string; lastActiveDate?: Date };
+// type RefreshTokenRequest = CustomRequest & { deviceId?: string; lastActiveDate?: Date };
 
 type AuthRequestParamsAndBody<T, B> = Request<T, unknown, B, unknown> & { user?: string };
 type AuthRequestParams<T> = Request<T, unknown, unknown, unknown> & { user?: string };
@@ -24,5 +24,5 @@ export {
   AuthRequestParamsAndBody,
   AuthRequestParams,
   DeviceRequest,
-  RefreshTokenRequest,
+  // RefreshTokenRequest,
 };

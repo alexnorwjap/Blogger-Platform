@@ -8,6 +8,7 @@ import { authorizationBearer } from '../../../shared/middlewares/authorizationBe
 import { contentCommentValidation } from './postValidation';
 import { resultIdValidation } from '../../../shared/middlewares/resultIdValidation';
 import container from '../../../ioc';
+import { userFromBearer } from '../../../shared/middlewares/userFromBearer';
 
 const postController = container.get<PostController>(PostController);
 
@@ -16,7 +17,13 @@ export const getPostsRoutes = () => {
 
   router.get('/', postController.getPostsList);
 
-  router.get('/:id/comments', idValidation, resultIdValidation, postController.getCommentsByPostId);
+  router.get(
+    '/:id/comments',
+    idValidation,
+    resultIdValidation,
+    userFromBearer,
+    postController.getCommentsByPostId
+  );
 
   router.get('/:id', idValidation, resultIdValidation, postController.getPost);
 

@@ -9,7 +9,7 @@ export type EntityFromDb = {
 
 export type UsersFilterSortPagination = {
   filter: object;
-  sort: Sort;
+  sort: { [key: string]: 1 | -1 };
   skip: number;
   limit: number;
 };

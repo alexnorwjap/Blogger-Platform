@@ -1,7 +1,7 @@
-import { BlogCreateDto, BlogUpdateDto } from './dto/blogDto';
+import { BlogDocument } from '../db/blogEntitiy';
 
 export interface BlogRepository {
-  create: (dto: BlogCreateDto) => Promise<string | null>;
-  update: (id: string, dto: BlogUpdateDto) => Promise<boolean>;
+  save: (dto: BlogDocument) => Promise<string | null>;
   delete: (id: string) => Promise<boolean>;
+  getBlogById: (id: string) => Promise<BlogDocument | null>;
 }

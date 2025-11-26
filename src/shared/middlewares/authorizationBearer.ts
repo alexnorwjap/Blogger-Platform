@@ -10,25 +10,16 @@ const authorizationBearer = async (req: UserRequest, res: Response, next: NextFu
   const auth =
     typeof req.headers['authorization'] === 'string' ? req.headers['authorization'] : null;
 
-  if (!auth) {
-    res.status(HTTP_STATUS_CODES.UNAUTHORIZED).send('Unauthorized');
-    return;
-  }
+  if (!auth) return res.status(HTTP_STATUS_CODES.UNAUTHORIZED).send('Unauthorized');
 
   const [type, token] = auth.split(' ');
-  if (type !== 'Bearer') {
-    res.status(HTTP_STATUS_CODES.UNAUTHORIZED).send('Unauthorized');
-    return;
-  }
+  if (type !== 'Bearer') return res.status(HTTP_STATUS_CODES.UNAUTHORIZED).send('Unauthorized');
 
   const userId = jwtService.getUserIdByToken(token);
-  if (userId) {
-    req.user = userId;
-    next();
-  } else {
-    res.status(HTTP_STATUS_CODES.UNAUTHORIZED).send('Unauthorized');
-    return;
-  }
+  if (!userId) return res.status(HTTP_STATUS_CODES.UNAUTHORIZED).send('Unauthorized');
+
+  req.user = userId;
+  next();
 };
 
 export { authorizationBearer };

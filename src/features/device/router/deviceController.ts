@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { HTTP_STATUS_CODES } from '../../../shared/constants/http-status';
-import { RefreshTokenRequest, RequestParams } from '../../../shared/types/api.types';
+import { DeviceRequest, RequestParams } from '../../../shared/types/api.types';
 import { DeviceQueryRepository } from '../repository/deviceQueryRepository';
 import { DeviceService } from '../service/deviceService';
 import { inject, injectable } from 'inversify';
@@ -12,7 +12,7 @@ export class DeviceController {
     @inject(DeviceService) readonly deviceService: DeviceService
   ) {}
 
-  getDevices = async (req: RefreshTokenRequest, res: Response) => {
+  getDevices = async (req: DeviceRequest, res: Response) => {
     const device = await this.deviceQueryRepository.getDeviceById(req.deviceId!);
     if (!device) return res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
 
@@ -20,21 +20,18 @@ export class DeviceController {
     res.status(HTTP_STATUS_CODES.SUCCESS).send(devices);
   };
 
-  deletedAllOtherDevices = async (req: RefreshTokenRequest, res: Response) => {
-    const device = await this.deviceQueryRepository.getDeviceById(req.deviceId!);
-    if (!device) return res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
+  deletedAllOtherDevices = async (req: DeviceRequest, res: Response) => {
+    // const device = await this.deviceQueryRepository.getDeviceById(req.deviceId!);
+    // if (!device) return res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
 
-    const result = await this.deviceService.deleteAllOtherDevicesByUserId(
-      device.userId,
-      req.deviceId!
-    );
+    const result = await this.deviceService.deleteAllOtherDevicesByUserId(req.deviceId!);
     if (!result.data) return res.sendStatus(HTTP_STATUS_CODES[result.status]);
 
     res.sendStatus(HTTP_STATUS_CODES[result.status]);
   };
 
   deleteDevice = async (
-    req: RefreshTokenRequest & RequestParams<{ deviceId: string }>,
+    req: DeviceRequest & RequestParams<{ deviceId: string }>,
     res: Response
   ) => {
     const [deviceFromToken, deviceFromParams] = await Promise.all([

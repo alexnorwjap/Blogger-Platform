@@ -2,24 +2,23 @@ import { UsersQueryRepository } from '../../../repositories/usersQueryRepository
 import { queryParamsDto } from '../../../repositories/dto/queryParamsDto';
 import { UsersViewModel } from '../../../models/UsersViewModel';
 import { UserQueryMapper } from '../mappers/UserQueryMapper';
-import { userCollection } from '../../../../../db/mongo.db';
-import { ObjectId } from 'mongodb';
 import { UserViewModel } from '../../../models/User';
 import { injectable } from 'inversify';
+import { userModel } from '../../../../../db/mongo.db';
 
 @injectable()
 export class UsersQueryRepoImpl implements UsersQueryRepository {
   async getAll(query: queryParamsDto): Promise<UsersViewModel> {
     const queryResult = UserQueryMapper.toCheckDefault(query);
     const queryParams = UserQueryMapper.toFilterSortPagination(queryResult);
-    const result = await userCollection
+    const result = await userModel
       .find(queryParams.filter)
       .sort(queryParams.sort)
       .skip(queryParams.skip)
       .limit(queryParams.limit)
-      .toArray();
+      .lean();
 
-    const count = await userCollection.countDocuments(queryParams.filter);
+    const count = await userModel.countDocuments(queryParams.filter);
     return UserQueryMapper.toDomainViewModel(
       queryResult,
       count,
@@ -27,12 +26,20 @@ export class UsersQueryRepoImpl implements UsersQueryRepository {
     );
   }
   async getUserById(id: string): Promise<UserViewModel | null> {
-    const result = await userCollection.findOne({ _id: new ObjectId(id) });
-    return result ? UserQueryMapper.toDomain(result) : null;
+    try {
+      const result = await userModel.findById(id).lean();
+      return result ? UserQueryMapper.toDomain(result) : null;
+    } catch (error) {
+      return null;
+    }
   }
 
   async findByLoginOrEmail(login: string, email: string): Promise<UserViewModel | null> {
-    const result = await userCollection.findOne({ $or: [{ login }, { email }] });
-    return result ? UserQueryMapper.toDomain(result) : null;
+    try {
+      const result = await userModel.findOne({ $or: [{ login }, { email }] }).lean();
+      return result ? UserQueryMapper.toDomain(result) : null;
+    } catch (error) {
+      return null;
+    }
   }
 }

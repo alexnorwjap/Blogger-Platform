@@ -1,9 +1,8 @@
-import { userCollection } from '../../../db/mongo.db';
+// import { userCollection } from '../../../db/mongo.db';
 import { AuthRepository } from '../repository/authRepo';
 import { AuthMapper } from './authMapper';
 import { authModel } from '../model/authModel';
-import { inputCreateDto } from './entity';
-import { ObjectId } from 'mongodb';
+import { inputCreateDto } from './authEntity';
 import {
   InputConfirmationDto,
   AuthDto,
@@ -12,48 +11,54 @@ import {
   passwordRecoveryDto,
 } from '../repository/dto/authDto';
 import { injectable } from 'inversify';
+import { userModel } from '../../../db/mongo.db';
+import { AuthModelEntity } from './authEntity';
+import { AuthDocument } from './authEntity';
 
 @injectable()
 export class AuthRepoImpl implements AuthRepository {
   async findByLoginOrEmail(dto: AuthDto | InputRegistrationDto): Promise<authModel | null> {
     if ('loginOrEmail' in dto) {
-      const user = await userCollection.findOne({
+      const user = await AuthModelEntity.findOne({
         $or: [{ login: dto.loginOrEmail }, { email: dto.loginOrEmail }],
       });
-      if (!user) return null;
-
-      return AuthMapper.toService(user);
+      return user ? AuthMapper.toService(user.toObject()) : null;
     }
     if ('login' in dto && 'email' in dto) {
-      const user = await userCollection.findOne({
+      const user = await AuthModelEntity.findOne({
         $or: [{ login: dto.login }, { email: dto.email }],
       });
-      if (!user) return null;
-
-      return AuthMapper.toService(user);
+      return user ? AuthMapper.toService(user.toObject()) : null;
     }
     return null;
   }
-  async create(dto: inputCreateDto): Promise<authModel> {
-    const user = await userCollection.insertOne({ _id: new ObjectId(), ...dto });
-    return AuthMapper.toService({ _id: user.insertedId, ...dto });
+  async findByConfirmationCode(code: string): Promise<AuthDocument | null> {
+    return await AuthModelEntity.findOne({ 'confirmation.confirmationCode': code });
   }
-  async update(userId: string, dto: InputConfirmationDto | passwordRecoveryDto): Promise<boolean> {
-    const result = await userCollection.updateOne(
-      { _id: new ObjectId(userId) },
-      { $set: { ...dto } }
-    );
-    return result.modifiedCount > 0;
+  async findByEmail(email: string): Promise<AuthDocument | null> {
+    return await AuthModelEntity.findOne({ email });
   }
-  async delete(userId: string): Promise<boolean> {
-    const result = await userCollection.deleteOne({ _id: new ObjectId(userId) });
-    return result.deletedCount > 0;
+  async findByRecoveryCode(recoveryCode: string): Promise<AuthDocument | null> {
+    return await AuthModelEntity.findOne({ recoveryCode });
   }
-  async addRecoveryCode(userId: string, dto: recoveryCodeDto): Promise<boolean> {
-    const result = await userCollection.updateOne(
-      { _id: new ObjectId(userId) },
-      { $set: { ...dto } }
-    );
-    return result.modifiedCount > 0;
+
+  async save(user: AuthDocument): Promise<AuthDocument> {
+    return await user.save();
   }
+  // async create(dto: inputCreateDto): Promise<authModel> {
+  //   const user = await userModel.create(dto);
+  //   return AuthMapper.toService(user.toObject());
+  // }
+  // async update(userId: string, dto: InputConfirmationDto | passwordRecoveryDto): Promise<boolean> {
+  //   const result = await userModel.updateOne({ _id: userId }, { $set: { ...dto } });
+  //   return result.modifiedCount > 0;
+  // }
+  // async delete(userId: string): Promise<boolean> {
+  //   const result = await userModel.deleteOne({ _id: userId });
+  //   return result.deletedCount > 0;
+  // }
+  // async addRecoveryCode(userId: string, dto: recoveryCodeDto): Promise<boolean> {
+  //   const result = await userModel.updateOne({ _id: userId }, { $set: { ...dto } });
+  //   return result.modifiedCount > 0;
+  // }
 }

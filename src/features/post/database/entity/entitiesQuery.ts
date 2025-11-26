@@ -1,7 +1,5 @@
-import { Sort } from 'mongodb';
-
 export type FilterSortPagination = {
-  sort: Sort;
+  sort: { [key: string]: 1 | -1 };
   skip: number;
   limit: number;
 };

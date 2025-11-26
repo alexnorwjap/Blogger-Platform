@@ -10,24 +10,16 @@ const ADMIN_CREDENTIAL_BASE64 = Buffer.from(
 const authorization = (req: CustomRequest, res: Response, next: NextFunction) => {
   const auth =
     typeof req.headers['authorization'] === 'string' ? req.headers['authorization'] : null;
-  console.log(auth);
-  console.log(ADMIN_CREDENTIAL_BASE64);
 
-  if (!auth) {
-    res.status(HTTP_STATUS_CODES.UNAUTHORIZED).send('Unauthorized');
-    return;
-  }
+  if (!auth) return res.status(HTTP_STATUS_CODES.UNAUTHORIZED).send('Unauthorized');
 
   const [type, token] = auth.split(' ');
-  if (type !== 'Basic') {
-    res.status(HTTP_STATUS_CODES.UNAUTHORIZED).send('Unauthorized');
-    return;
-  }
+  if (type !== 'Basic') return res.status(HTTP_STATUS_CODES.UNAUTHORIZED).send('Unauthorized');
 
   if (ADMIN_CREDENTIAL_BASE64 !== token) {
-    res.status(HTTP_STATUS_CODES.UNAUTHORIZED).send('Unauthorized');
-    return;
+    return res.status(HTTP_STATUS_CODES.UNAUTHORIZED).send('Unauthorized');
   }
+
   next();
 };
 

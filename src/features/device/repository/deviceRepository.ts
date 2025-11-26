@@ -1,34 +1,43 @@
-import { ObjectId } from 'mongodb';
 import { DeviceModel } from '../model/deviceModel';
-import { deviceCollection } from '../../../db/mongo.db';
+
 import { injectable } from 'inversify';
+// import { deviceModel } from '../../../db/mongo.db';
+import { DeviceDocument, DeviceModelEntity } from '../database/deviceEntity';
 
 @injectable()
 export class DeviceRepository {
-  async create(dto: DeviceModel): Promise<string> {
-    const result = await deviceCollection.insertOne({ _id: new ObjectId(), ...dto });
-    return result.insertedId.toString();
+  async findById(deviceId: string): Promise<DeviceDocument | null> {
+    return await DeviceModelEntity.findById(deviceId);
   }
 
-  async update(deviceId: string, lastActiveDate: Date): Promise<boolean> {
-    const result = await deviceCollection.updateOne(
-      {
-        _id: new ObjectId(deviceId),
-      },
-      { $set: { lastActiveDate: lastActiveDate } }
-    );
-    return result.modifiedCount > 0;
+  // async create(dto: DeviceModel): Promise<string> {
+  //   const result = await deviceModel.create(dto);
+  //   return result._id.toString();
+  // }
+
+  async save(device: DeviceDocument): Promise<DeviceDocument> {
+    return await device.save();
   }
+
+  // async update(deviceId: string, lastActiveDate: Date): Promise<boolean> {
+  //   const result = await deviceModel.updateOne(
+  //     {
+  //       _id: deviceId,
+  //     },
+  //     { $set: { lastActiveDate: lastActiveDate } }
+  //   );
+  //   return result.modifiedCount > 0;
+  // }
 
   async delete(deviceId: string): Promise<boolean> {
-    const result = await deviceCollection.deleteOne({ _id: new ObjectId(deviceId) });
+    const result = await DeviceModelEntity.deleteOne({ _id: deviceId });
     return result.deletedCount > 0;
   }
 
   async deleteAllOther(userId: string, deviceId: string): Promise<boolean> {
-    const result = await deviceCollection.deleteMany({
+    const result = await DeviceModelEntity.deleteMany({
       userId,
-      _id: { $ne: new ObjectId(deviceId) },
+      _id: { $ne: deviceId },
     });
     return result.deletedCount > 0;
   }

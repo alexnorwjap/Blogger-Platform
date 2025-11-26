@@ -39,6 +39,7 @@ export class UsersController {
       req.body.login,
       req.body.email
     );
+
     if (existingUser) {
       return res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({
         errorsMessages: [
@@ -51,9 +52,11 @@ export class UsersController {
     }
 
     const newUserId = await this.usersService.createUser(req.body);
+
     if (!newUserId.data) return res.status(HTTP_STATUS_CODES[newUserId.status]);
 
     const newUser = await this.usersQueryRepository.getUserById(newUserId.data);
+
     if (!newUser) return res.status(HTTP_STATUS_CODES.BAD_REQUEST);
 
     res.status(HTTP_STATUS_CODES.CREATED).send(newUser);

@@ -1,8 +1,10 @@
-import { CommentViewModel, CommentsViewModel } from '../model/commentModel';
-import { queryParamsDto } from './repositoryDto';
+import { CommentEntity, FilterSortPagination } from '../database/commentsEntity';
+import { WithId } from 'mongodb';
 
 export interface CommentsQueryRepository {
-  getCommentById(id: string): Promise<CommentViewModel | null>;
-  getCommentByUserIdAndCommentId(commentId: string, userId: string): Promise<Boolean>;
-  getCommentsByPostId(postId: string, query: queryParamsDto): Promise<CommentsViewModel>;
+  getCommentById(id: string): Promise<WithId<CommentEntity> | null>;
+  getCommentsByPostId(
+    postId: string,
+    query: FilterSortPagination
+  ): Promise<{ comments: WithId<CommentEntity>[]; count: number }>;
 }

@@ -13,7 +13,12 @@ export class CommentViewModel {
     readonly id: string,
     readonly content: string,
     readonly commentatorInfo: { userId: string; userLogin: string },
-    readonly createdAt: Date
+    readonly createdAt: Date,
+    readonly likesInfo: {
+      likesCount: number;
+      dislikesCount: number;
+      myStatus: String;
+    }
   ) {}
 }
 

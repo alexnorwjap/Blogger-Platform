@@ -1,4 +1,4 @@
-import { entityDB } from './entity';
+import { entityDB } from './authEntity';
 import { AuthViewModel } from '../authType';
 
 export class AuthQueryMapper {

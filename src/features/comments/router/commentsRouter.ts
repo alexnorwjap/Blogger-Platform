@@ -6,13 +6,31 @@ import { idValidation } from '../../../shared/middlewares/id-validation';
 import { resultIdValidation } from '../../../shared/middlewares/resultIdValidation';
 import container from '../../../ioc';
 import { CommentsController } from './commentsController';
+import { codeLikeValidation } from './validation/codeLikeValidation';
+import { userFromBearer } from '../../../shared/middlewares/userFromBearer';
 
 const commentsController = container.get<CommentsController>(CommentsController);
 
 export const commentsRoutes = () => {
   const router = express.Router();
 
-  router.get('/:id', idValidation, resultIdValidation, commentsController.getCommentById);
+  router.get(
+    '/:id',
+    userFromBearer,
+    idValidation,
+    resultIdValidation,
+    commentsController.getCommentById
+  );
+
+  router.put(
+    '/:id/like-status',
+    authorizationBearer,
+    idValidation,
+    resultIdValidation,
+    codeLikeValidation,
+    inputValidationResult,
+    commentsController.changeLikeStatus
+  );
   router.put(
     '/:id',
     authorizationBearer,

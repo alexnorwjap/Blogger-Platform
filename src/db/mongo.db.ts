@@ -1,47 +1,21 @@
-import { Collection, Db, MongoClient } from 'mongodb';
-import { BlogEntity } from '../features/blog/db/entitiy';
-import { PostEntity } from '../features/post/database/entity/entities';
-import { User } from '../features/users/userTypes';
-import { CommentEntity } from '../features/comments/database/entity';
-import { RequestLogEntity } from '../features/request-log/model/RequestLogEntity';
+import {
+  RequestLogEntity,
+  requestLogSchema,
+} from '../features/request-log/database/entities/requestEntities';
 import { SETTINGS } from '../shared/settings/settings';
-import { DeviceModel } from '../features/device/model/deviceModel';
 
-const BLOG_COLLECTION_NAME = 'blogs';
-const POST_COLLECTION_NAME = 'posts';
-const USER_COLLECTION_NAME = 'users';
-const COMMENT_COLLECTION_NAME = 'comments';
-const REQUEST_LOG_COLLECTION_NAME = 'request_logs';
-const DEVICE_COLLECTION_NAME = 'devices';
+import mongoose from 'mongoose';
+import { authSchema, entityDB as AuthEntityDB } from '../features/auth/database/authEntity';
 
-export let client: MongoClient;
-export let blogCollection: Collection<BlogEntity>;
-export let postCollection: Collection<PostEntity>;
-export let userCollection: Collection<User>;
-export let commentCollection: Collection<CommentEntity>;
-export let requestLogCollection: Collection<RequestLogEntity>;
-export let deviceCollection: Collection<DeviceModel>;
+export const userModel = mongoose.model<AuthEntityDB>('User', authSchema);
+export const requestLogModel = mongoose.model<RequestLogEntity>('RequestLog', requestLogSchema);
 
-// Подключения к бд
 export async function runDB(url: string): Promise<void> {
-  client = new MongoClient(url);
-  const db: Db = client.db(SETTINGS.DB_NAME);
-
-  //Инициализация коллекций
-  blogCollection = db.collection<BlogEntity>(BLOG_COLLECTION_NAME);
-  postCollection = db.collection<PostEntity>(POST_COLLECTION_NAME);
-  userCollection = db.collection<User>(USER_COLLECTION_NAME);
-  commentCollection = db.collection<CommentEntity>(COMMENT_COLLECTION_NAME);
-  requestLogCollection = db.collection<RequestLogEntity>(REQUEST_LOG_COLLECTION_NAME);
-  deviceCollection = db.collection<DeviceModel>(DEVICE_COLLECTION_NAME);
   try {
-    await client.connect();
-    await db.command({ ping: 1 });
+    await mongoose.connect(url, { dbName: SETTINGS.DB_NAME });
     console.log('✅ Connected to the database');
-    await deviceCollection.createIndex({ lastActiveDate: 1 }, { expireAfterSeconds: 60 });
-    await requestLogCollection.createIndex({ date: 1 }, { expireAfterSeconds: 60 });
   } catch (e) {
-    await client.close();
+    await mongoose.disconnect();
     throw new Error(`❌ Database not connected: ${e}`);
   }
 }

@@ -1,8 +1,7 @@
-import { CreatePostDto, UpdatePostDto } from './dto/postRepoDto';
+import { PostDocument } from '../database/entity/postEntities';
 
 export interface PostRepository {
-  create: (dto: CreatePostDto) => Promise<string | null>;
-  createByBlogId: (dto: CreatePostDto) => Promise<string | null>;
-  update: (id: string, dto: UpdatePostDto) => Promise<boolean>;
+  getPostById: (id: string) => Promise<PostDocument | null>;
+  save: (post: PostDocument) => Promise<string | null>;
   delete: (id: string) => Promise<boolean>;
 }
