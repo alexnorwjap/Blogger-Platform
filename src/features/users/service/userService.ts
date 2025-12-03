@@ -4,7 +4,7 @@ import { Result } from '../../../shared/utils/result-object';
 import { createResult } from '../../../shared/utils/result-object';
 import { inject, injectable } from 'inversify';
 import { BcryptService } from '../../auth/adapter/bcryptService';
-import { AuthDocument, entityDB } from '../../auth/database/authEntity';
+import { UserDocument, UserModel } from '../../auth/database/userEntity';
 
 @injectable()
 export class UsersService {
@@ -14,16 +14,18 @@ export class UsersService {
   ) {}
 
   async createUser(dto: CreateUserDto): Promise<Result<string | null>> {
+    const existingUser = await this.usersRepository.findByLoginOrEmail(dto.login, dto.email);
+    if (existingUser) {
+      const field = existingUser.login === dto.login ? 'login' : 'email';
+      const message = `User with this ${field} already exists`;
+      return createResult('BAD_REQUEST', null, 'errorsMessages', [{ field, message }]);
+    }
     const hashedPassword = await this.bcryptService.hashPassword(dto.password);
 
-    const resultCreate = await this.usersRepository.create({
-      ...dto,
-      password: hashedPassword,
-      createdAt: new Date(),
-    });
-    if (!resultCreate) return createResult('BAD_REQUEST', null);
+    const newUser = UserModel.createUserAdmin(dto, hashedPassword);
+    await this.usersRepository.save(newUser);
 
-    return createResult('CREATED', resultCreate);
+    return createResult('CREATED', newUser.id);
   }
 
   async deleteUser(id: string): Promise<Result<boolean>> {
@@ -33,7 +35,7 @@ export class UsersService {
     return createResult('NO_CONTENT', resultDelete);
   }
 
-  async getUserIdById(id: string): Promise<AuthDocument | null> {
+  async getUserById(id: string): Promise<UserDocument | null> {
     return await this.usersRepository.getUserById(id);
   }
 }

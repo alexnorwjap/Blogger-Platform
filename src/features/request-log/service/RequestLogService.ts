@@ -2,8 +2,10 @@ import { Result } from '../../../shared/utils/result-object';
 import { createResult } from '../../../shared/utils/result-object';
 import { RequestLogRepositoryImpl } from '../database/repository/RequestLogRepositoryImpl';
 import { inject, injectable } from 'inversify';
+import { QueryRepoRequestLogDto } from '../repository/dto/RequestLogDto';
+import { RequestLogModel } from '../database/entities/requestEntities';
 
-type InputAddRequestLogDto = {
+export type InputAddRequestLogDto = {
   ip: string;
   url: string;
 };
@@ -15,14 +17,15 @@ export class RequestLogService {
   ) {}
 
   async addRequestLog(dto: InputAddRequestLogDto): Promise<Result<boolean>> {
-    const newRequestLog = {
-      ip: dto.ip,
-      url: dto.url,
-      date: new Date(),
-    };
-    const resultRequesLogCreate = await this.requestLogRepository.addRequestLog(newRequestLog);
-    if (!resultRequesLogCreate) return createResult('BAD_REQUEST', resultRequesLogCreate);
+    const newRequest = RequestLogModel.createRequest(dto);
+    await this.requestLogRepository.save(newRequest);
 
-    return createResult('CREATED', resultRequesLogCreate);
+    return createResult('CREATED', true);
+  }
+
+  async countByFilter(dto: QueryRepoRequestLogDto): Promise<number> {
+    const tenSecondsAgo = new Date(Date.now() - 10000);
+
+    return await this.requestLogRepository.countByFilter(dto, tenSecondsAgo);
   }
 }

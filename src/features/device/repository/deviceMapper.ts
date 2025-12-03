@@ -1,16 +1,13 @@
-import { ObjectId } from 'mongodb';
-import { DeviceModel, DeviceViewModel } from '../model/deviceModel';
+import { Device } from '../database/deviceEntity';
 
-type DeviceEntity = {
-  _id: ObjectId;
+type DeviceViewModel = {
   ip: string;
   title: string;
   lastActiveDate: Date;
-  userId: string;
+  deviceId: string;
 };
-
 class DeviceMapper {
-  toViewModel(device: DeviceEntity): DeviceViewModel {
+  toViewModel(device: Device): DeviceViewModel {
     return {
       ip: device.ip,
       title: device.title,
@@ -18,14 +15,8 @@ class DeviceMapper {
       deviceId: device._id.toString(),
     };
   }
-  toModel(device: DeviceEntity): DeviceModel {
-    return {
-      ip: device.ip,
-      title: device.title,
-      lastActiveDate: device.lastActiveDate,
-      userId: device.userId,
-    };
-  }
 }
 
-export const deviceMapper = new DeviceMapper();
+const deviceMapper = new DeviceMapper();
+
+export { DeviceViewModel, deviceMapper };

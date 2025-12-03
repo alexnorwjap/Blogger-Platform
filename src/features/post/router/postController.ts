@@ -3,14 +3,15 @@ import {
   RequestBody,
   AuthRequestParams,
   RequestParams,
-  RequestQuery,
+  UserRequest,
+  RequestParamsAndBodyAndCustom,
 } from '../../../shared/types/api.types';
 import { queryParamsDto } from '../repositories/dto/queryRepoPostDto';
 import { PostsViewModel } from '../models/PostsViewModel';
 import { PostQueryRepositoryImpl } from '../database/repositories/PostQueryRepositoryImpl';
 import { HTTP_STATUS_CODES } from '../../../shared/constants/http-status';
 import { Response } from 'express';
-import { PostModel } from '../models/Post';
+import { PostViewModel } from '../models/PostsViewModel';
 import { BlogQueryRepositoryImpl } from '../../blog/db/blogQueryRepositoryImpl';
 import { PostService } from '../service/postService';
 import { InputPostDto } from '../service/serviceDto';
@@ -27,8 +28,21 @@ export class PostController {
     @inject(CommentsQueryService) readonly commentsQueryService: CommentsQueryService
   ) {}
 
-  getPostsList = async (req: RequestQuery<queryParamsDto>, res: Response<PostsViewModel>) => {
-    const posts = await this.postQueryRepository.getAll(queryPostNormalize(req.query));
+  getPostsList = async (
+    req: UserRequest & { query: queryParamsDto },
+    res: Response<PostsViewModel>
+  ) => {
+    let statuses: Map<string, string> | null = null;
+    if (req.user) {
+      statuses = await this.postService.getStatusesForPostsByUserId(req.user);
+    }
+    const newestLikes = await this.postService.getNewestStatusesForPosts();
+    const posts = await this.postQueryRepository.getAll(
+      queryPostNormalize(req.query),
+      null,
+      statuses,
+      newestLikes
+    );
 
     if (posts.items.length === 0) {
       return res.status(HTTP_STATUS_CODES.SUCCESS).send({
@@ -42,14 +56,19 @@ export class PostController {
     res.status(HTTP_STATUS_CODES.SUCCESS).send(posts);
   };
 
-  getPost = async (req: RequestParams<{ id: string }>, res: Response<PostModel>) => {
-    const result = await this.postQueryRepository.getPostById(req.params.id);
+  getPost = async (req: AuthRequestParams<{ id: string }>, res: Response<PostViewModel>) => {
+    let statuses: { [postId: string]: string } | null = null;
+    if (req.user) {
+      statuses = await this.postService.getStatusesForPost(req.params.id, req.user);
+    }
+    const newestLikes = await this.postService.getNewestLikesForPost(req.params.id);
+    const result = await this.postQueryRepository.getPostById(req.params.id, statuses, newestLikes);
     if (!result) return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
 
     res.status(HTTP_STATUS_CODES.SUCCESS).send(result);
   };
 
-  createPost = async (req: RequestBody<InputPostDto>, res: Response<PostModel>) => {
+  createPost = async (req: RequestBody<InputPostDto>, res: Response<PostViewModel>) => {
     const blog = await this.blogQueryRepository.getBlogById(req.body.blogId);
     if (!blog) return res.sendStatus(HTTP_STATUS_CODES.BAD_REQUEST);
 
@@ -61,7 +80,7 @@ export class PostController {
     );
     if (!createPostResult.data) return res.sendStatus(HTTP_STATUS_CODES[createPostResult.status]);
 
-    const post = await this.postQueryRepository.getPostById(createPostResult.data);
+    const post = await this.postQueryRepository.getPostById(createPostResult.data, null, []);
     if (!post) return res.sendStatus(HTTP_STATUS_CODES.BAD_REQUEST);
 
     res.status(HTTP_STATUS_CODES.CREATED).send(post);
@@ -82,13 +101,12 @@ export class PostController {
   };
 
   getCommentsByPostId = async (req: AuthRequestParams<{ id: string }>, res: Response) => {
-    const statuses = await this.postService.getStatusesByPostId(req.params.id, req?.user || null);
-    if (!statuses.data) return res.sendStatus(HTTP_STATUS_CODES[statuses.status]);
+    const userId = req.user ? req.user : null;
 
     const result = await this.commentsQueryService.getCommentsAndStatusesByPostId(
-      statuses.data.postId,
+      userId,
       queryPostNormalize(req.query!),
-      statuses.data.statusData
+      req.params.id
     );
 
     res.status(HTTP_STATUS_CODES[result.status]).send(result.data);
@@ -115,5 +133,18 @@ export class PostController {
     if (!result) return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
 
     res.status(HTTP_STATUS_CODES[createCommentResult.status]).send(result);
+  };
+
+  updateLikeStatusPost = async (
+    req: AuthRequestParamsAndBody<{ id: string }, { likeStatus: string }>,
+    res: Response
+  ) => {
+    const result = await this.postService.updateLikeStatusPost(
+      req.params.id,
+      req.body.likeStatus,
+      req.user!
+    );
+    if (!result.data) return res.sendStatus(HTTP_STATUS_CODES[result.status]);
+    res.sendStatus(HTTP_STATUS_CODES[result.status]);
   };
 }

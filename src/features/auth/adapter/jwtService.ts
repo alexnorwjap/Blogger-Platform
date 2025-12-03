@@ -3,6 +3,11 @@ import { SETTINGS } from '../../../shared/settings/settings';
 import { DeviceQueryRepository } from '../../device/repository/deviceQueryRepository';
 import { inject, injectable } from 'inversify';
 
+export type RefreshTokenPayload = {
+  deviceId: string;
+  lastActiveDate: Date;
+};
+
 @injectable()
 export class JwtService {
   constructor(
@@ -12,16 +17,13 @@ export class JwtService {
     return jwt.sign({ dto }, SETTINGS.JWT_SECRET, { expiresIn: '5m' });
   }
 
-  generateRefreshToken(dto: { deviceId: string; lastActiveDate: Date }): string {
+  generateRefreshToken(dto: RefreshTokenPayload): string {
     return jwt.sign({ ...dto }, SETTINGS.JWT_SECRET, { expiresIn: '10m' });
   }
 
-  getDeviceDataByToken(token: string): { deviceId: string; lastActiveDate: string } | null {
+  getDeviceDataByToken(token: string): RefreshTokenPayload | null {
     try {
-      const result = jwt.verify(token, SETTINGS.JWT_SECRET) as {
-        deviceId: string;
-        lastActiveDate: string;
-      };
+      const result = jwt.verify(token, SETTINGS.JWT_SECRET) as RefreshTokenPayload;
       return result ? result : null;
     } catch (error) {
       return null;

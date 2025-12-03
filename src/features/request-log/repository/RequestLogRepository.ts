@@ -1,5 +1,7 @@
-import { RepoRequestLogDto } from './dto/RequestLogDto';
+import { RequestDocument } from '../database/entities/requestEntities';
+import { QueryRepoRequestLogDto } from './dto/RequestLogDto';
 
 export interface RequestLogRepository {
-  addRequestLog(dto: RepoRequestLogDto): Promise<boolean>;
+  save(dto: RequestDocument): Promise<RequestDocument>;
+  countByFilter(dto: QueryRepoRequestLogDto, tenSecondsAgo: Date): Promise<number>;
 }

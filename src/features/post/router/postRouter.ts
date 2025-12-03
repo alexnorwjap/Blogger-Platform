@@ -9,13 +9,14 @@ import { contentCommentValidation } from './postValidation';
 import { resultIdValidation } from '../../../shared/middlewares/resultIdValidation';
 import container from '../../../ioc';
 import { userFromBearer } from '../../../shared/middlewares/userFromBearer';
+import { codeLikeValidation } from '../../comments/router/validation/codeLikeValidation';
 
 const postController = container.get<PostController>(PostController);
 
 export const getPostsRoutes = () => {
   const router = express.Router();
 
-  router.get('/', postController.getPostsList);
+  router.get('/', userFromBearer, postController.getPostsList);
 
   router.get(
     '/:id/comments',
@@ -25,7 +26,7 @@ export const getPostsRoutes = () => {
     postController.getCommentsByPostId
   );
 
-  router.get('/:id', idValidation, resultIdValidation, postController.getPost);
+  router.get('/:id', userFromBearer, idValidation, resultIdValidation, postController.getPost);
 
   router.post(
     '/:id/comments',
@@ -43,6 +44,16 @@ export const getPostsRoutes = () => {
     postInputDtoValidation,
     inputValidationResult,
     postController.createPost
+  );
+
+  router.put(
+    '/:id/like-status',
+    authorizationBearer,
+    idValidation,
+    resultIdValidation,
+    codeLikeValidation,
+    inputValidationResult,
+    postController.updateLikeStatusPost
   );
 
   router.put(

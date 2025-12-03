@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { setupApp } from './app';
 import express from 'express';
-import { runDB } from './db/mongo.db';
+import { runDB } from './database/mongo.db';
 import { SETTINGS } from './shared/settings/settings';
 
 const app = express();

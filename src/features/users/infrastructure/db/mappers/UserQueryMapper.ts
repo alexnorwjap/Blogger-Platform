@@ -1,20 +1,30 @@
 import { UserViewModel } from '../../../models/User';
 import { queryParamsDto } from '../../../repositories/dto/queryParamsDto';
-import { EntityFromDb } from '../entitiy/entityQuery';
+import { UserDocument } from '../../../../auth/database/userEntity';
 import { UsersViewModel } from '../../../models/UsersViewModel';
-import { UsersFilterSortPagination } from '../entitiy/entityQuery';
+
+type UsersFilterSortPagination = {
+  filter: object;
+  sort: { [key: string]: 1 | -1 };
+  skip: number;
+  limit: number;
+};
 
 export class UserQueryMapper {
-  public static toDomain(entity: EntityFromDb): UserViewModel {
+  public static toDomain(entity: UserDocument): UserViewModel {
     return {
-      id: entity._id.toString(),
+      id: entity.id,
       login: entity.login,
       email: entity.email,
       createdAt: entity.createdAt,
     };
   }
 
-  public static toDomainViewModel(query: queryParamsDto, count: number, users: UserViewModel[]): UsersViewModel {
+  public static toDomainViewModel(
+    query: queryParamsDto,
+    count: number,
+    users: UserViewModel[]
+  ): UsersViewModel {
     return {
       pagesCount: Math.ceil(count / +query.pageSize),
       page: +query.pageNumber,
@@ -48,8 +58,12 @@ export class UserQueryMapper {
       filter: {
         ...((query.searchLoginTerm || query.searchEmailTerm) && {
           $or: [
-            ...(query.searchLoginTerm ? [{ login: { $regex: query.searchLoginTerm, $options: 'i' } }] : []),
-            ...(query.searchEmailTerm ? [{ email: { $regex: query.searchEmailTerm, $options: 'i' } }] : []),
+            ...(query.searchLoginTerm
+              ? [{ login: { $regex: query.searchLoginTerm, $options: 'i' } }]
+              : []),
+            ...(query.searchEmailTerm
+              ? [{ email: { $regex: query.searchEmailTerm, $options: 'i' } }]
+              : []),
           ],
         }),
       },

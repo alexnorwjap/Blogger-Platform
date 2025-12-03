@@ -1,8 +1,8 @@
 import { CommentQueryMapper } from '../database/commentQueryMapper';
 import { CommentsQueryRepoImpl } from '../database/commentsQueryRepoImpl';
-import { CommentsViewModel, CommentViewModel } from '../model/commentModel';
+import { CommentsViewModel, CommentViewModel } from '../model/commentViewModel';
 import { inject, injectable } from 'inversify';
-import { LikeService } from '../../like/likeService';
+import { LikeCommentService } from '../../comment-likes/likeService';
 import { queryParamsDto } from '../repository/repositoryDto';
 import { createResult, Result } from '../../../shared/utils/result-object';
 
@@ -10,7 +10,7 @@ import { createResult, Result } from '../../../shared/utils/result-object';
 export class CommentsQueryService {
   constructor(
     @inject(CommentsQueryRepoImpl) readonly commentsQueryRepo: CommentsQueryRepoImpl,
-    @inject(LikeService) readonly likeService: LikeService
+    @inject(LikeCommentService) readonly LikeCommentService: LikeCommentService
   ) {}
 
   async getCommentByIdWithStatus(
@@ -19,7 +19,7 @@ export class CommentsQueryService {
   ): Promise<CommentViewModel | null> {
     let status: string | null = null;
     if (userId) {
-      status = await this.likeService.getStatusByUserAndCommentId(userId, id);
+      status = await this.LikeCommentService.getStatusByUserAndCommentId(userId, id);
     }
 
     const comment = await this.commentsQueryRepo.getCommentById(id);
@@ -28,9 +28,9 @@ export class CommentsQueryService {
   }
 
   async getCommentsAndStatusesByPostId(
-    postId: string,
+    userId: string | null,
     query: queryParamsDto,
-    statusData: Map<string, string> | null
+    postId: string
   ): Promise<Result<CommentsViewModel>> {
     const queryResult = CommentQueryMapper.toFilterSortPagination(query);
     const { comments, count } = await this.commentsQueryRepo.getCommentsByPostId(
@@ -46,10 +46,16 @@ export class CommentsQueryService {
         items: [],
       });
     }
+    let statuses: Map<string, string> | null = null;
+    const idsComments = comments.map(comment => comment.id);
+    if (userId) {
+      statuses = await this.LikeCommentService.getStatusesByUserAndCommentIds(userId, idsComments);
+    }
 
     const commentsWithStatus = comments.map(comment =>
-      CommentQueryMapper.toDomain(comment.toObject(), statusData?.get(comment.id))
+      CommentQueryMapper.toDomain(comment, statuses?.get(comment.id))
     );
+
     const commentsViewModel = CommentQueryMapper.toDomainViewModel(
       query,
       count,

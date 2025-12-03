@@ -1,7 +1,6 @@
 type RepoRequestLogDto = {
   ip: string;
   url: string;
-  date: Date;
 };
 
 type QueryRepoRequestLogDto = {

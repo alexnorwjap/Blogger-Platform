@@ -3,7 +3,7 @@ import { HTTP_STATUS_CODES } from '../constants/http-status';
 type StatusType = keyof typeof HTTP_STATUS_CODES;
 
 type ExtensionType = {
-  field: string | null;
+  field: string;
   message: string;
 };
 

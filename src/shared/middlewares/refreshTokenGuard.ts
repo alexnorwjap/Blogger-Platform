@@ -22,6 +22,5 @@ export const refreshTokenGuard = async (req: DeviceRequest, res: Response, next:
   if (isTokenExpired) return res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
 
   req.deviceId = deviceData.deviceId;
-  // req.lastActiveDate  = new Date(deviceData.lastActiveDate);
   next();
 };

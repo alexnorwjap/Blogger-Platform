@@ -1,16 +1,16 @@
-import { WithId } from 'mongodb';
-import { CommentEntity } from './commentsEntity';
-import { CommentViewModel, CommentsViewModel } from '../model/commentModel';
+import { CommentDocument } from './commentsEntity';
+import { CommentViewModel, CommentsViewModel } from '../model/commentViewModel';
 import { queryParamsDto } from '../repository/repositoryDto';
-import { FilterSortPagination } from './commentsEntity';
 
+export type FilterSortPagination = {
+  sort: { [key: string]: 1 | -1 };
+  skip: number;
+  limit: number;
+};
 export class CommentQueryMapper {
-  public static toDomain(
-    entity: WithId<CommentEntity>,
-    status: string | null = null
-  ): CommentViewModel {
+  public static toDomain(entity: CommentDocument, status: string | null = null): CommentViewModel {
     return {
-      id: entity._id.toString(),
+      id: entity.id,
       content: entity.content,
       commentatorInfo: entity.commentatorInfo,
       createdAt: entity.createdAt,

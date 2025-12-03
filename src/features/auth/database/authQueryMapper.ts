@@ -1,12 +1,12 @@
-import { entityDB } from './authEntity';
+import { User } from './userEntity';
 import { AuthViewModel } from '../authType';
 
 export class AuthQueryMapper {
-  public static toViewModel(entity: entityDB): AuthViewModel {
+  public static toViewModel(user: User): AuthViewModel {
     return {
-      login: entity.login,
-      email: entity.email,
-      userId: entity._id.toString(),
+      login: user.login,
+      email: user.email,
+      userId: user._id.toString(),
     };
   }
 }

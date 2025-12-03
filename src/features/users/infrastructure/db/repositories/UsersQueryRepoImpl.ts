@@ -4,42 +4,24 @@ import { UsersViewModel } from '../../../models/UsersViewModel';
 import { UserQueryMapper } from '../mappers/UserQueryMapper';
 import { UserViewModel } from '../../../models/User';
 import { injectable } from 'inversify';
-import { userModel } from '../../../../../db/mongo.db';
+import { UserModel } from '../../../../auth/database/userEntity';
 
 @injectable()
 export class UsersQueryRepoImpl implements UsersQueryRepository {
   async getAll(query: queryParamsDto): Promise<UsersViewModel> {
     const queryResult = UserQueryMapper.toCheckDefault(query);
-    const queryParams = UserQueryMapper.toFilterSortPagination(queryResult);
-    const result = await userModel
-      .find(queryParams.filter)
-      .sort(queryParams.sort)
-      .skip(queryParams.skip)
-      .limit(queryParams.limit)
-      .lean();
+    const { filter, sort, skip, limit } = UserQueryMapper.toFilterSortPagination(queryResult);
+    const result = await UserModel.find(filter).sort(sort).skip(skip).limit(limit);
 
-    const count = await userModel.countDocuments(queryParams.filter);
+    const count = await UserModel.countDocuments(filter);
     return UserQueryMapper.toDomainViewModel(
       queryResult,
       count,
-      result.map(UserQueryMapper.toDomain)
+      result.map(user => UserQueryMapper.toDomain(user))
     );
   }
   async getUserById(id: string): Promise<UserViewModel | null> {
-    try {
-      const result = await userModel.findById(id).lean();
-      return result ? UserQueryMapper.toDomain(result) : null;
-    } catch (error) {
-      return null;
-    }
-  }
-
-  async findByLoginOrEmail(login: string, email: string): Promise<UserViewModel | null> {
-    try {
-      const result = await userModel.findOne({ $or: [{ login }, { email }] }).lean();
-      return result ? UserQueryMapper.toDomain(result) : null;
-    } catch (error) {
-      return null;
-    }
+    const result = await UserModel.findById(id);
+    return result ? UserQueryMapper.toDomain(result) : null;
   }
 }

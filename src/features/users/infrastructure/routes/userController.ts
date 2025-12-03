@@ -1,9 +1,7 @@
 import { HTTP_STATUS_CODES } from '../../../../shared/constants/http-status';
 import { RequestBody, RequestParams } from '../../../../shared/types/api.types';
-import { UserViewModel } from '../../models/User';
 import { CreateUserDto } from '../../service/userServiceDto';
 import { UsersService } from '../../service/userService';
-import { WrapValidErrorsType } from '../../../../shared/types/errors-type';
 import { Response } from 'express';
 import { UsersQueryRepoImpl } from '../../infrastructure/db/repositories/UsersQueryRepoImpl';
 import { queryParamsDto } from '../../repositories/dto/queryParamsDto';
@@ -31,32 +29,14 @@ export class UsersController {
     return res.status(HTTP_STATUS_CODES.SUCCESS).send(users);
   };
 
-  createUser = async (
-    req: RequestBody<CreateUserDto>,
-    res: Response<UserViewModel | WrapValidErrorsType>
-  ) => {
-    const existingUser = await this.usersQueryRepository.findByLoginOrEmail(
-      req.body.login,
-      req.body.email
-    );
-
-    if (existingUser) {
-      return res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({
-        errorsMessages: [
-          {
-            field: existingUser.login === req.body.login ? 'login' : 'email',
-            message: `User with this ${existingUser.login === req.body.login ? 'login' : 'email'} already exists`,
-          },
-        ],
+  createUser = async (req: RequestBody<CreateUserDto>, res: Response) => {
+    const newUserResult = await this.usersService.createUser(req.body);
+    if (!newUserResult.data)
+      return res.status(HTTP_STATUS_CODES[newUserResult.status]).send({
+        [newUserResult.errorMessage!]: newUserResult.extensions,
       });
-    }
 
-    const newUserId = await this.usersService.createUser(req.body);
-
-    if (!newUserId.data) return res.status(HTTP_STATUS_CODES[newUserId.status]);
-
-    const newUser = await this.usersQueryRepository.getUserById(newUserId.data);
-
+    const newUser = await this.usersQueryRepository.getUserById(newUserResult.data);
     if (!newUser) return res.status(HTTP_STATUS_CODES.BAD_REQUEST);
 
     res.status(HTTP_STATUS_CODES.CREATED).send(newUser);

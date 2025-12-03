@@ -1,6 +1,5 @@
 import { HTTP_STATUS_CODES } from '../../../shared/constants/http-status';
 import { Response } from 'express';
-import { BlogModel } from '../models/Blog';
 import {
   RequestBody,
   RequestParams,
@@ -10,17 +9,18 @@ import {
 import { BlogId, BlogUpdateDto } from './../repositories/dto/blogDto';
 import { InputBlogDto } from '../service/blogServiceDto';
 import { BlogQueryRepositoryImpl } from '../db/blogQueryRepositoryImpl';
-import { BlogsViewModel } from '../models/BlogsViewModel';
+import { BlogsViewModel, BlogViewModel } from '../models/BlogsViewModel';
 import { BlogService } from '../service/blogService';
 import { WrapValidErrorsType } from '../../../shared/types/errors-type';
-import { PostsViewModel } from '../../post/models/PostsViewModel';
+import { PostsViewModel, PostViewModel } from '../../post/models/PostsViewModel';
 import { PostQueryRepositoryImpl } from '../../post/database/repositories/PostQueryRepositoryImpl';
-import { PostModel } from '../../post/models/Post';
 import { PostService } from '../../post/service/postService';
 import { queryBlogsNormalize, QueryParamsInput } from './helper/queryNormalize';
 import { InputPostDtoByBlogId } from '../../post/service/serviceDto';
 import { queryPostNormalize } from '../../post/router/helper/queryPostNormalize';
 import { inject, injectable } from 'inversify';
+import { AuthRequestParams } from '../../../shared/types/api.types';
+import { queryParamsDto } from '../../post/repositories/dto/queryRepoPostDto';
 
 @injectable()
 export class BlogController {
@@ -31,7 +31,7 @@ export class BlogController {
     @inject(PostService) readonly postService: PostService
   ) {}
 
-  getBlog = async (req: RequestParams<BlogId>, res: Response<BlogModel>) => {
+  getBlog = async (req: RequestParams<BlogId>, res: Response<BlogViewModel>) => {
     const blog = await this.blogQueryRepository.getBlogById(req.params.id);
     if (!blog) return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
 
@@ -52,7 +52,7 @@ export class BlogController {
     res.status(HTTP_STATUS_CODES.SUCCESS).send(blogs);
   };
 
-  createBlog = async (req: RequestBody<InputBlogDto>, res: Response<BlogModel>) => {
+  createBlog = async (req: RequestBody<InputBlogDto>, res: Response<BlogViewModel>) => {
     const createBlogResult = await this.blogService.createBlog(req.body);
     if (!createBlogResult.data) return res.sendStatus(HTTP_STATUS_CODES[createBlogResult.status]);
 
@@ -76,13 +76,24 @@ export class BlogController {
     res.sendStatus(HTTP_STATUS_CODES[resultUpdateBlog.status]);
   };
 
-  getPostsForBlog = async (req: RequestParams<BlogId>, res: Response<PostsViewModel>) => {
+  getPostsForBlog = async (
+    req: AuthRequestParams<BlogId> & { query: queryParamsDto },
+    res: Response<PostsViewModel>
+  ) => {
     const currentBlog = await this.blogQueryRepository.getBlogById(req.params.id);
     if (!currentBlog) return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
 
+    let statuses: Map<string, string> | null = null;
+    if (req.user) {
+      statuses = await this.postService.getStatusesForPostsByUserId(req.user);
+    }
+    const newestLikes = await this.postService.getNewestStatusesForPosts(req.params.id);
+
     const posts = await this.postQueryRepository.getAll(
       queryPostNormalize(req.query),
-      req.params.id
+      req.params.id,
+      statuses,
+      newestLikes
     );
     if (posts.items.length === 0) {
       return res.status(HTTP_STATUS_CODES.SUCCESS).send({
@@ -99,7 +110,7 @@ export class BlogController {
 
   createPostForBlog = async (
     req: RequestParamsAndBody<BlogId, InputPostDtoByBlogId>,
-    res: Response<PostModel | WrapValidErrorsType>
+    res: Response<PostViewModel | WrapValidErrorsType>
   ) => {
     const blog = await this.blogQueryRepository.getBlogById(req.params.id);
     if (!blog) return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
@@ -107,13 +118,13 @@ export class BlogController {
     const createPostResult = await this.blogService.createPostForBlog(
       {
         ...req.body,
-        blogId: req.params.id,
+        blogId: blog.id,
       },
       blog.name
     );
     if (!createPostResult.data) return res.sendStatus(HTTP_STATUS_CODES[createPostResult.status]);
 
-    const post = await this.postQueryRepository.getPostById(createPostResult.data);
+    const post = await this.postQueryRepository.getPostById(createPostResult.data, null, []);
     if (!post) return res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
 
     res.status(HTTP_STATUS_CODES[createPostResult.status]).send(post);

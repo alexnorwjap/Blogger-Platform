@@ -7,6 +7,7 @@ import { postInputDtoValidationForBlog } from './validation/postValidationForBlo
 import { resultIdValidation } from '../../../shared/middlewares/resultIdValidation';
 import { BlogController } from './blogController';
 import container from '../../../ioc';
+import { userFromBearer } from '../../../shared/middlewares/userFromBearer';
 
 const blogController = container.get<BlogController>(BlogController);
 
@@ -15,7 +16,13 @@ export const getBlogsRoutes = () => {
 
   router.get('/', blogController.getBlogsList);
 
-  router.get('/:id/posts', idValidation, resultIdValidation, blogController.getPostsForBlog);
+  router.get(
+    '/:id/posts',
+    userFromBearer,
+    idValidation,
+    resultIdValidation,
+    blogController.getPostsForBlog
+  );
 
   router.get('/:id', idValidation, resultIdValidation, blogController.getBlog);
 

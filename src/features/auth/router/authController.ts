@@ -35,7 +35,7 @@ export class AuthController {
 
   profile = async (req: UserRequest, res: Response) => {
     if (!req.user) return res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
-    const user = await this.authQueryRepository.getProfile(req.user);
+    const user = await this.authQueryRepository.getUserById(req.user);
     res.status(HTTP_STATUS_CODES.SUCCESS).send(user);
   };
 
@@ -49,8 +49,6 @@ export class AuthController {
   };
 
   registrationConfirmation = async (req: RequestBody<{ code: string }>, res: Response) => {
-    // const user = await this.authQueryRepository.findByConfirmationCode(req.body.code);
-
     const result = await this.authService.registrationConfirmation(req.body.code);
     if (!result.data && result.errorMessage)
       return res.status(HTTP_STATUS_CODES[result.status]).send({
@@ -60,9 +58,6 @@ export class AuthController {
   };
 
   registrationEmailResending = async (req: RequestBody<{ email: string }>, res: Response) => {
-    // const user = await this.authQueryRepository.findByEmail(req.body.email);
-    // if (!user) return res.sendStatus(HTTP_STATUS_CODES.BAD_REQUEST);
-
     const result = await this.authService.registrationEmailResending(req.body.email);
     if (!result.data && result.errorMessage)
       return res.status(HTTP_STATUS_CODES[result.status]).send({
@@ -72,9 +67,6 @@ export class AuthController {
   };
 
   refreshToken = async (req: DeviceRequest, res: Response) => {
-    // const device = await this.deviceQueryRepository.getDeviceById(req.deviceId!);
-    // if (!device) return res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
-
     const newTokens = await this.authService.refreshToken(req.deviceId!);
     if (!newTokens.data) return res.sendStatus(HTTP_STATUS_CODES[newTokens.status]);
 
@@ -96,8 +88,6 @@ export class AuthController {
   };
 
   passwordRecoveryCode = async (req: RequestBody<{ email: string }>, res: Response) => {
-    // const user = await this.authQueryRepository.findByEmail(req.body.email);
-    // if (!user) return res.sendStatus(HTTP_STATUS_CODES.NO_CONTENT);
     const result = await this.authService.passwordRecoveryCode(req.body.email);
     res.sendStatus(HTTP_STATUS_CODES[result.status]);
   };
@@ -106,16 +96,6 @@ export class AuthController {
     req: RequestBody<{ recoveryCode: string; newPassword: string }>,
     res: Response
   ) => {
-    // const user = await this.authQueryRepository.findByRecoveryCode(req.body.recoveryCode);
-    // if (!user)
-    //   return res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({
-    //     errorsMessages: [
-    //       {
-    //         field: 'recoveryCode',
-    //         message: 'Invalid recovery code',
-    //       },
-    //     ],
-    //   });
     const result = await this.authService.passwordRecovery(req.body);
     if (!result.data) return res.sendStatus(HTTP_STATUS_CODES[result.status]);
     res.sendStatus(HTTP_STATUS_CODES[result.status]);

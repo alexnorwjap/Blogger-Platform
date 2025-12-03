@@ -1,16 +1,15 @@
-import { DeviceModel, DeviceViewModel } from '../model/deviceModel';
-import { deviceMapper } from './deviceMapper';
+import { deviceMapper, DeviceViewModel } from './deviceMapper';
 import { injectable } from 'inversify';
-import { DeviceModelEntity } from '../database/deviceEntity';
+import { DeviceModel, Device } from '../database/deviceEntity';
 
 @injectable()
 export class DeviceQueryRepository {
-  async getDeviceById(deviceId: string): Promise<DeviceModel | null> {
-    const device = await DeviceModelEntity.findById(deviceId);
-    return device ? deviceMapper.toModel(device.toObject()) : null;
+  async getDeviceById(deviceId: string): Promise<Device | null> {
+    const device = await DeviceModel.findById(deviceId);
+    return device ? device.toObject() : null;
   }
   async getDevicesByUserId(userId: string): Promise<DeviceViewModel[]> {
-    const devices = await DeviceModelEntity.find({ userId });
+    const devices = await DeviceModel.find({ userId });
     return devices.map(device => deviceMapper.toViewModel(device.toObject()));
   }
 }

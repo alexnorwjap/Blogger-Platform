@@ -1,6 +1,7 @@
-import mongoose, { HydratedDocument, model, ObjectId } from 'mongoose';
+import mongoose, { HydratedDocument, Model, model, ObjectId } from 'mongoose';
+import { UserDocument } from '../../auth/database/userEntity';
 
-type CommentEntity = {
+type Comment = {
   _id: ObjectId;
   content: string;
   postId: string;
@@ -16,15 +17,19 @@ type CommentEntity = {
   };
 };
 
-export type FilterSortPagination = {
-  sort: { [key: string]: 1 | -1 };
-  skip: number;
-  limit: number;
-};
+interface CommentMethods {
+  updateComment(content: string): void;
+  updateLike(likesInfo: { likesCount: number; dislikesCount: number }): void;
+}
 
-type CommentDocument = HydratedDocument<CommentEntity>;
+interface CommentStaticsMethods {
+  createComment(postId: string, content: string, user: UserDocument): CommentDocument;
+}
 
-const commentSchema = new mongoose.Schema<CommentEntity>({
+type CommentDocument = HydratedDocument<Comment, CommentMethods>;
+type CommentModel = Model<Comment, {}, CommentMethods> & CommentStaticsMethods;
+
+const commentSchema = new mongoose.Schema<Comment, CommentModel, CommentMethods>({
   content: { type: String, required: true },
   postId: { type: String, required: true },
   commentatorInfo: {
@@ -39,6 +44,37 @@ const commentSchema = new mongoose.Schema<CommentEntity>({
   },
 });
 
-const CommentModelEntity = model<CommentEntity>('Comment', commentSchema);
+class CommentEntity {
+  declare content: string;
+  declare likesInfo: {
+    likesCount: number;
+    dislikesCount: number;
+    myStatus: string;
+  };
 
-export { CommentEntity, commentSchema, CommentModelEntity, CommentDocument };
+  static createComment(postId: string, content: string, user: UserDocument): CommentDocument {
+    return new CommentModel({
+      postId,
+      content,
+      commentatorInfo: {
+        userId: user.id,
+        userLogin: user.login,
+      },
+    });
+  }
+
+  updateComment(content: string): void {
+    this.content = content;
+  }
+
+  updateLike(status: { likesCount: number; dislikesCount: number }): void {
+    this.likesInfo.likesCount = status.likesCount;
+    this.likesInfo.dislikesCount = status.dislikesCount;
+  }
+}
+
+commentSchema.loadClass(CommentEntity);
+
+const CommentModel = model<Comment, CommentModel>('Comment', commentSchema);
+
+export { Comment, CommentModel, CommentDocument };

@@ -1,7 +1,8 @@
 import { ObjectId } from 'mongodb';
-import mongoose, { HydratedDocument, model } from 'mongoose';
+import mongoose, { HydratedDocument, Model, model } from 'mongoose';
+import { InputCreateDeviceDto } from '../service/typeService';
 
-type DeviceEntity = {
+type Device = {
   _id: ObjectId;
   ip: string;
   title: string;
@@ -9,15 +10,41 @@ type DeviceEntity = {
   userId: string;
 };
 
-type DeviceDocument = HydratedDocument<DeviceEntity>;
+interface DeviceMethods {
+  updateDate(): void;
+}
+interface DeviceStaticsMethods {
+  createDevice(dto: InputCreateDeviceDto): DeviceDocument;
+}
 
-const deviceSchema = new mongoose.Schema<DeviceEntity>({
+type DeviceDocument = HydratedDocument<Device, DeviceMethods>;
+type DeviceModel = Model<Device, {}, DeviceMethods> & DeviceStaticsMethods;
+
+const deviceSchema = new mongoose.Schema<Device, DeviceModel, DeviceMethods>({
   ip: { type: String, required: true },
   title: { type: String, required: true },
   lastActiveDate: { type: Date, required: true, expires: 60, default: () => new Date() },
   userId: { type: String, required: true },
 });
 
-const DeviceModelEntity = model<DeviceEntity>('Device', deviceSchema);
+class DeviceEntity {
+  declare lastActiveDate: Date;
 
-export { DeviceEntity, deviceSchema, DeviceModelEntity, DeviceDocument };
+  static createDevice(dto: InputCreateDeviceDto): DeviceDocument {
+    return new DeviceModel({
+      ip: dto.ip,
+      title: dto.title,
+      userId: dto.userId,
+    });
+  }
+
+  updateDate(): void {
+    this.lastActiveDate = new Date();
+  }
+}
+
+deviceSchema.loadClass(DeviceEntity);
+
+const DeviceModel = model<Device, DeviceModel>('Device', deviceSchema);
+
+export { Device, DeviceModel, DeviceDocument };

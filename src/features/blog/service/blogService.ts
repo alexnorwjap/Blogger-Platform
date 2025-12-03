@@ -5,7 +5,7 @@ import { Result } from '../../../shared/utils/result-object';
 import { inject, injectable } from 'inversify';
 import { InputPostDto } from '../../post/service/serviceDto';
 import { PostService } from '../../post/service/postService';
-import { BlogModelEntity } from '../db/blogEntitiy';
+import { BlogModel } from '../db/blogEntitiy';
 @injectable()
 export class BlogService {
   constructor(
@@ -14,23 +14,19 @@ export class BlogService {
   ) {}
 
   async createBlog(dto: InputBlogDto): Promise<Result<string>> {
-    const newBlog = new BlogModelEntity({
-      name: dto.name,
-      description: dto.description,
-      websiteUrl: dto.websiteUrl,
-    });
-    const blogId = await this.blogRepository.save(newBlog);
-    return createResult('CREATED', blogId);
+    const newBlog = BlogModel.createBlog(dto);
+    await this.blogRepository.save(newBlog);
+
+    return createResult('CREATED', newBlog.id);
   }
 
   async updateBlog(id: string, dto: InputBlogDto): Promise<Result<boolean>> {
     const blog = await this.blogRepository.getBlogById(id);
     if (!blog) return createResult('NOT_FOUND', false);
-    blog.name = dto.name;
-    blog.description = dto.description;
-    blog.websiteUrl = dto.websiteUrl;
 
+    blog.updateBlog(dto);
     await this.blogRepository.save(blog);
+
     return createResult('NO_CONTENT', true);
   }
 

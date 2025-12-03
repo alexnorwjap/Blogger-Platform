@@ -1,7 +1,8 @@
-import mongoose, { HydratedDocument, model } from 'mongoose';
+import mongoose, { HydratedDocument, Model, model } from 'mongoose';
 import { ObjectId } from 'mongodb';
+import { InputBlogDto } from '../service/blogServiceDto';
 
-export type BlogEntity = {
+type Blog = {
   _id: ObjectId;
   name: string;
   description: string;
@@ -10,9 +11,17 @@ export type BlogEntity = {
   isMembership: boolean;
 };
 
-export type BlogDocument = HydratedDocument<BlogEntity>;
+interface BlogMethods {
+  updateBlog(dto: InputBlogDto): void;
+}
+interface BlogStaticsMethods {
+  createBlog(dto: InputBlogDto): BlogDocument;
+}
 
-export const blogSchema = new mongoose.Schema<BlogEntity>({
+type BlogDocument = HydratedDocument<Blog, BlogMethods>;
+type BlogModel = Model<Blog, {}, BlogMethods> & BlogStaticsMethods;
+
+const blogSchema = new mongoose.Schema<Blog>({
   name: { type: String, required: true },
   description: { type: String, required: true },
   websiteUrl: { type: String, required: true },
@@ -20,4 +29,28 @@ export const blogSchema = new mongoose.Schema<BlogEntity>({
   isMembership: { type: Boolean, required: true, default: false },
 });
 
-export const BlogModelEntity = model<BlogEntity>('Blog', blogSchema);
+class BlogEntity {
+  declare name: string;
+  declare description: string;
+  declare websiteUrl: string;
+
+  static createBlog(dto: InputBlogDto): BlogDocument {
+    return new BlogModel({
+      name: dto.name,
+      description: dto.description,
+      websiteUrl: dto.websiteUrl,
+    });
+  }
+
+  updateBlog(dto: InputBlogDto): void {
+    this.name = dto.name;
+    this.description = dto.description;
+    this.websiteUrl = dto.websiteUrl;
+  }
+}
+
+blogSchema.loadClass(BlogEntity);
+
+const BlogModel = model<Blog, BlogModel>('Blog', blogSchema);
+
+export { BlogDocument, Blog, BlogModel };

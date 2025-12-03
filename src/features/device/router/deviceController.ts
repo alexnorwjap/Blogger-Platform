@@ -21,9 +21,6 @@ export class DeviceController {
   };
 
   deletedAllOtherDevices = async (req: DeviceRequest, res: Response) => {
-    // const device = await this.deviceQueryRepository.getDeviceById(req.deviceId!);
-    // if (!device) return res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
-
     const result = await this.deviceService.deleteAllOtherDevicesByUserId(req.deviceId!);
     if (!result.data) return res.sendStatus(HTTP_STATUS_CODES[result.status]);
 

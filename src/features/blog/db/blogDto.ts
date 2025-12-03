@@ -1,4 +1,4 @@
-export type BlogEntityDto = {
+export type BlogDto = {
   name: string;
   description: string;
   websiteUrl: string;

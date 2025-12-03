@@ -23,15 +23,16 @@ import { DeviceRepository } from './features/device/repository/deviceRepository'
 import { DeviceService } from './features/device/service/deviceService';
 import { DeviceController } from './features/device/router/deviceController';
 import { UsersRepoImpl } from './features/users/infrastructure/db/repositories/UsersRepoImpl';
-import { UsersQueryRepoImpl } from './features/users/infrastructure/db/repositories/UsersQueryRepoImpl';
 import { UsersService } from './features/users/service/userService';
 import { UsersController } from './features/users/infrastructure/routes/userController';
 import { RequestLogRepositoryImpl } from './features/request-log/database/repository/RequestLogRepositoryImpl';
-import { QueryRequestLogRepositoryImpl } from './features/request-log/database/repository/QueryRequestLogRepositoryImpl';
 import { RequestLogService } from './features/request-log/service/RequestLogService';
-import { LikeRepoImpl } from './features/like/dataabase/likeRepoImpl';
-import { LikeService } from './features/like/likeService';
+import { LikeCommentRepoImpl } from './features/comment-likes/database/likeRepoImpl';
+import { LikeCommentService } from './features/comment-likes/likeService';
 import { CommentsQueryService } from './features/comments/service/commentsQueryService';
+import { UsersQueryRepoImpl } from './features/users/infrastructure/db/repositories/UsersQueryRepoImpl';
+import { PostLikesRepositoryImpl } from './features/post-likes/database/postLikesRepositoryImpl';
+import { PostLikeService } from './features/post-likes/postLikeService';
 
 const container: Container = new Container();
 
@@ -79,11 +80,14 @@ container.bind(UsersController).toSelf();
 
 // Request Log Features
 container.bind(RequestLogRepositoryImpl).toSelf();
-container.bind(QueryRequestLogRepositoryImpl).toSelf();
 container.bind(RequestLogService).toSelf();
 
-// Like Features
-container.bind(LikeRepoImpl).toSelf();
-container.bind(LikeService).toSelf();
+// Like Comment Features
+container.bind(LikeCommentRepoImpl).toSelf();
+container.bind(LikeCommentService).toSelf();
+
+// Like Post Features
+container.bind(PostLikesRepositoryImpl).toSelf();
+container.bind(PostLikeService).toSelf();
 
 export default container;

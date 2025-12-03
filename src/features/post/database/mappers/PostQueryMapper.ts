@@ -1,27 +1,40 @@
-import { PostModel } from '../../models/Post';
-import { PostsViewModel } from '../../models/PostsViewModel';
-import { FilterSortPagination } from '../entity/entitiesQuery';
-import { PostEntity } from '../entity/postEntities';
+import { PostViewModel, PostsViewModel } from '../../models/PostsViewModel';
+import { PostDocument } from '../entity/postEntities';
 import { queryParamsDto } from '../../repositories/dto/queryRepoPostDto';
-import { WithId } from 'mongodb';
+
+type FilterSortPagination = {
+  sort: { [key: string]: 1 | -1 };
+  skip: number;
+  limit: number;
+};
 
 export class PostQueryMapper {
-  public static toDomain(entity: WithId<PostEntity>): PostModel {
+  public static toDomain(
+    entity: PostDocument,
+    status: string | null,
+    newestLikes: { userId: string; login: string; addedAt: Date }[] | []
+  ): PostViewModel {
     return {
-      id: entity._id.toString(),
+      id: entity.id,
       title: entity.title,
       shortDescription: entity.shortDescription,
       content: entity.content,
       blogId: entity.blogId,
       blogName: entity.blogName,
       createdAt: entity.createdAt,
+      extendedLikesInfo: {
+        likesCount: entity.extendedLikesInfo.likesCount,
+        dislikesCount: entity.extendedLikesInfo.dislikesCount,
+        myStatus: status || 'None',
+        newestLikes: newestLikes,
+      },
     };
   }
 
   public static toDomainViewModel(
     query: queryParamsDto,
     count: number,
-    posts: PostModel[]
+    posts: PostViewModel[]
   ): PostsViewModel {
     return {
       pagesCount: Math.ceil(count / +query.pageSize),

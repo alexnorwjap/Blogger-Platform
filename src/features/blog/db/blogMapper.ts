@@ -1,10 +1,10 @@
-import { BlogModel } from '../models/Blog';
-import { BlogEntity } from './blogEntitiy';
+import { BlogViewModel } from '../models/BlogsViewModel';
+import { BlogDocument } from './blogEntitiy';
 
 export class BlogMapper {
-  public static toDomain(entity: BlogEntity): BlogModel {
+  public static toDomain(entity: BlogDocument): BlogViewModel {
     return {
-      id: entity._id.toString(),
+      id: entity.id,
       name: entity.name,
       description: entity.description,
       websiteUrl: entity.websiteUrl,

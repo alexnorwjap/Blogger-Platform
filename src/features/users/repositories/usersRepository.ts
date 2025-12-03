@@ -1,8 +1,8 @@
-import { UserViewModel } from '../models/User';
-import { InputUserDto } from './dto/commandsUserDto';
-import { Result } from '../../../shared/utils/result-object';
+import { UserDocument } from '../../auth/database/userEntity';
 
 export interface UsersRepository {
-  create: (dto: InputUserDto) => Promise<string | null>;
+  save: (user: UserDocument) => Promise<UserDocument>;
   delete: (id: string) => Promise<boolean>;
+  getUserById: (id: string) => Promise<UserDocument | null>;
+  findByLoginOrEmail: (login: string, email: string) => Promise<UserDocument | null>;
 }

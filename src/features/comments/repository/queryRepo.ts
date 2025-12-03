@@ -1,10 +1,11 @@
-import { CommentEntity, FilterSortPagination } from '../database/commentsEntity';
+import { Comment } from '../database/commentsEntity';
+import { FilterSortPagination } from '../database/commentQueryMapper';
 import { WithId } from 'mongodb';
 
 export interface CommentsQueryRepository {
-  getCommentById(id: string): Promise<WithId<CommentEntity> | null>;
+  getCommentById(id: string): Promise<WithId<Comment> | null>;
   getCommentsByPostId(
     postId: string,
     query: FilterSortPagination
-  ): Promise<{ comments: WithId<CommentEntity>[]; count: number }>;
+  ): Promise<{ comments: WithId<Comment>[]; count: number }>;
 }
